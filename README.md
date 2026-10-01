@@ -51,9 +51,12 @@ Un dossier par jour, nommé `Day-XX-mot` (ex : `Day-01-pulse`). Chaque dossier c
 - le code du projet (le plus souvent une page HTML, ex : `pulse.html`, à ouvrir dans un navigateur) ;
 - un `README.md` qui explique le code et **en quoi il correspond au mot**.
 
+La page `index.html` à la racine est le **hub** : une grille des 31 mots où chaque jour terminé est cliquable. Pour y ajouter un projet, il suffit de renseigner son chemin à côté du mot dans la liste `DAYS` du script.
+
 ```
 DevTober/
 ├── README.md
+├── index.html        (le hub)
 ├── Day-01-pulse/
 │   ├── pulse.html
 │   └── README.md

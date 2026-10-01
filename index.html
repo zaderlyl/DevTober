@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEVTOBER</title>
+<style>
+  :root {
+    --bg: #1f9d55;
+    --ink: #fff;
+    --card: rgba(255, 255, 255, .12);
+    --card-hover: rgba(255, 255, 255, .24);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; background: var(--bg); color: var(--ink);
+    font-family: ui-monospace, Menlo, monospace;
+    padding: 48px 16px 64px;
+  }
+  main { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 40px; }
+  h1 { font-size: clamp(40px, 9vw, 84px); line-height: 1; letter-spacing: -.02em; }
+  .tag { margin-top: 12px; opacity: .85; font-size: 15px; line-height: 1.5; max-width: 52ch; }
+  .count { margin-top: 20px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+
+  .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    list-style: none;
+  }
+  .day {
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 120px; padding: 14px 16px;
+    border-radius: 14px; background: var(--card);
+    color: inherit; text-decoration: none;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .day .num { font-size: 13px; letter-spacing: .12em; opacity: .7; }
+  .day .word { font-size: 24px; font-weight: 700; }
+  .day .state { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+
+  a.day:hover, a.day:focus-visible { background: var(--card-hover); transform: translateY(-3px); outline: none; }
+  a.day:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
+  .day.done { background: var(--ink); color: var(--bg); }
+  .day.done .num, .day.done .state { opacity: .8; }
+  a.day.done:hover, a.day.done:focus-visible { background: var(--ink); transform: translateY(-3px) scale(1.02); }
+  .day.pending { opacity: .45; }
+  .day.today { box-shadow: 0 0 0 2px var(--ink); }
+
+  footer { margin-top: 48px; font-size: 13px; opacity: .8; line-height: 1.8; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>DEVTOBER</h1>
+    <p class="tag">1 mot par jour pendant tout octobre. Une création en code inspirée du mot, publiée chaque jour.</p>
+    <p class="count" id="count"></p>
+  </header>
+
+  <ul class="grid" id="grid"></ul>
+
+  <footer>
+    <p>Chaque projet est ouvert dans la page du jour, avec son README pour comprendre le code.</p>
+    <p><a href="README.md">Règles et participation</a> · #devtober</p>
+  </footer>
+</main>
+
+<script>
+// Pour ajouter un projet : renseigner le chemin de sa page à côté du mot.
+const DAYS = [
+  { word: 'Pulse', path: 'Day-01-pulse/pulse.html' },
+  { word: 'Loop' },
+  { word: 'Bloom' },
+  { word: 'Drift' },
+  { word: 'Chaos' },
+  { word: 'Tiny' },
+  { word: 'Swarm' },
+  { word: 'Maze' },
+  { word: 'Gravity' },
+  { word: 'Fold' },
+  { word: 'Ripple' },
+  { word: 'Lost' },
+  { word: 'Tangle' },
+  { word: 'Bounce' },
+  { word: 'Shadow' },
+  { word: 'Tide' },
+  { word: 'Orbit' },
+  { word: 'Glitch' },
+  { word: 'Echo' },
+  { word: 'Fragile' },
+  { word: 'Signal' },
+  { word: 'Mirror' },
+  { word: 'Spark' },
+  { word: 'Hidden' },
+  { word: 'Melt' },
+  { word: 'Machine' },
+  { word: 'Haunted' },
+  { word: 'Grow' },
+  { word: 'Infinite' },
+  { word: 'Collapse' },
+  { word: 'Wake' },
+];
+
+// le jour du mois, uniquement en octobre 2026
+const now = new Date();
+const today = now.getFullYear() === 2026 && now.getMonth() === 9 ? now.getDate() : null;
+
+const grid = document.getElementById('grid');
+DAYS.forEach((d, i) => {
+  const n = i + 1;
+  const li = document.createElement('li');
+  const el = document.createElement(d.path ? 'a' : 'div');
+  el.className = 'day ' + (d.path ? 'done' : 'pending') + (n === today ? ' today' : '');
+  if (d.path) el.href = d.path;
+  el.innerHTML =
+    `<span class="num">${String(n).padStart(2, '0')}</span>` +
+    `<span class="word">${d.word}</span>` +
+    `<span class="state">${d.path ? 'ouvrir' : n === today ? 'aujourd\'hui' : 'à venir'}</span>`;
+  li.appendChild(el);
+  grid.appendChild(li);
+});
+
+const done = DAYS.filter(d => d.path).length;
+document.getElementById('count').textContent = `${done} / ${DAYS.length} projets`;
+</script>
+</body>
+</html>
