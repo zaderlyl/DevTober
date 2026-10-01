@@ -10,7 +10,7 @@
   .hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; opacity: .4; font-size: 13px; letter-spacing: .15em; text-transform: uppercase; }
   .letter {
     position: fixed; left: 50%; top: 50%;
-    font-size: 120px; font-weight: 700; color: #fff;
+    font-size: 120px; line-height: 1; font-weight: 700; color: #fff;
     will-change: transform;
     pointer-events: none;
   }
@@ -31,7 +31,7 @@ document.addEventListener('keydown', e => {
   el.className = 'letter';
   el.textContent = e.key.toUpperCase();
   document.body.appendChild(el);
-  letters.push({ el, t: 0, y: 0, vy: 0 });
+  letters.push({ el, t: 0, y: 0, vy: 0, settled: false });
 });
 
 let last = performance.now();
@@ -39,8 +39,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
 
-  for (let i = letters.length - 1; i >= 0; i--) {
-    const l = letters[i];
+  for (const l of letters) {
     l.t += dt;
 
     let scale = 1;
@@ -55,9 +54,15 @@ function frame(now) {
 
     l.el.style.transform = `translate(-50%, calc(-50% + ${l.y}px)) scale(${scale})`;
 
-    if (l.y > window.innerHeight) {
-      l.el.remove();
-      letters.splice(i, 1);
+    // sol : bord bas de la fenêtre, remonté de la hauteur des lettres déjà posées
+    if (!l.settled) {
+      const stack = letters.reduce((h, o) => o.settled ? h + o.el.offsetHeight : h, 0);
+      const floorY = window.innerHeight / 2 - l.el.offsetHeight / 2 - stack;
+      if (l.y >= floorY) {
+        l.y = floorY;
+        l.vy = 0;
+        l.settled = true;
+      }
     }
   }
   requestAnimationFrame(frame);
