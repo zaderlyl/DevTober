@@ -1,14 +1,27 @@
 # Day 01 - Pulse
 
-Chaque touche pressée fait apparaître sa lettre au centre de l'écran, puis elle tombe.
+Chaque touche pressée fait apparaître sa lettre au centre de l'écran, avec un battement, avant qu'elle tombe et s'empile. Un clic envoie une onde (un "pulse") qui pousse et fait vibrer les lettres sur son passage.
 
 ## Lancer
 Ouvrir `index.html` dans un navigateur. Aucune dépendance.
 
+## Interactions
+- **Touche** : fait apparaître la lettre au centre. Elle bat, puis tombe.
+- **Clic** : une zone part du curseur, grossit et se dissipe. Son front pousse et fait trembler les lettres qu'il traverse.
+
 ## Lien avec le mot
-La lettre apparaît avec un battement (elle grossit puis revient à sa taille, comme un pouls) avant que la gravité la prenne.
+Le *pulse* est présent à trois niveaux :
+- la lettre apparaît avec un battement (elle grossit puis revient à sa taille, comme un pouls) ;
+- le halo du clic est une impulsion qui se propage ;
+- la vibration des lettres est l'écho de cette impulsion, qui s'éteint peu à peu.
 
 ## Technique
-- Un `keydown` crée un élément par lettre
-- Boucle `requestAnimationFrame` : phase de pulse (scale sinusoïdal), puis chute avec accélération constante
-- La lettre est supprimée du DOM quand elle sort de l'écran
+- Le DOM uniquement (une `div` par lettre), boucle `requestAnimationFrame`, aucune librairie.
+- **Mesure du glyphe** : `measureText` donne la vraie hauteur et largeur visibles de chaque lettre, pour que le sol et les contacts collent au dessin et pas à sa boîte CSS.
+- **Physique 2D maison** : position et vitesse en x et y, gravité, frottement au sol, murs latéraux. L'appui de chaque lettre est recalculé à chaque frame (le bas de la fenêtre ou le haut de la lettre en dessous), donc une lettre retombe si on retire celle qui la porte.
+- **Collisions** : les lettres qui se chevauchent sont séparées selon l'axe où elles pénètrent le moins (quelques passes par frame). Un choc latéral échange un peu de vitesse.
+- **Halo** : le rayon est calculé comme l'animation CSS (de 0,3 à 4 fois la taille de base, avec décélération). Seule la bande proche du front pousse, de moins en moins fort avec le temps. Un léger biais vers le haut permet de décoller du sol.
+- **Vibration** : décalage aléatoire et petite rotation appliqués au rendu seulement, sans toucher à la physique, avec une amplitude qui s'éteint exponentiellement.
+
+## Réglages
+Les constantes en haut du script : `GRAVITY`, `HALO_FORCE`, `HALO_BAND`, `SHAKE_MAX`, `SHAKE_DECAY`, `COLLISION_BOUNCE`.
