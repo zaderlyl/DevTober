@@ -30,11 +30,12 @@
 </style>
 </head>
 <body>
-<div class="hint">tape une touche</div>
+<div class="hint">tape vite pour former un mot</div>
 
 <script>
 const GRAVITY = 2400;      // px/s²
-const PULSE_TIME = 0.35;   // durée du battement avant la chute
+const PULSE_TIME = 0.35;   // durée du battement d'une lettre qui apparaît
+const WORD_DELAY = 600;    // ms sans frappe avant que le mot tombe
 const HALO_TIME = 0.9;     // durée du halo (identique à l'animation CSS)
 const HALO_BASE_R = 100;   // rayon de base du halo (200px / 2)
 const HALO_BAND = 140;     // épaisseur du front qui pousse
@@ -45,16 +46,41 @@ const SHAKE_MAX = 10;     // amplitude max de la vibration (px)
 const SHAKE_DECAY = 7;     // vitesse d'extinction de la vibration
 
 const letters = [];
+let word = [];      // lettres en cours de frappe : alignées au centre, pas encore tombées
+let lastKey = 0;    // instant de la dernière touche
 
 document.addEventListener('keydown', e => {
-  if (e.key.length !== 1 || e.key === ' ') return;
+  if (e.key === ' ') { e.preventDefault(); releaseWord(); return; }   // espace : le mot tombe tout de suite
+  if (e.key.length !== 1) return;
   const el = document.createElement('div');
   el.className = 'letter';
   el.textContent = e.key.toUpperCase();
   document.body.appendChild(el);
   // x, y : décalage par rapport au centre de l'écran
-  letters.push({ el, t: 0, x: 0, y: 0, vx: 0, vy: 0, shake: 0, ...measure(el) });
+  const l = { el, t: 0, x: 0, y: 0, vx: 0, vy: 0, shake: 0, tx: 0, released: false, ...measure(el) };
+  letters.push(l);
+  word.push(l);
+  lastKey = performance.now();
+  layoutWord();
+  l.x = l.tx;   // la nouvelle lettre apparaît à sa place, les autres glissent pour lui faire de la place
+  if (word.length * l.advance > window.innerWidth * 0.9) releaseWord();   // mot trop large : il tombe
 });
+
+// centre le mot : chaque lettre vise sa place (tx), le rendu glisse vers elle
+function layoutWord() {
+  const total = word.reduce((w, l) => w + l.advance, 0);
+  let x = -total / 2;
+  for (const l of word) {
+    l.tx = x + l.advance / 2;
+    x += l.advance;
+  }
+}
+
+// le mot est lâché : ses lettres passent sous gravité, côte à côte
+function releaseWord() {
+  for (const l of word) l.released = true;
+  word = [];
+}
 
 // clic : une zone grossit, se dissipe et pousse les lettres sur son passage
 const halos = [];
@@ -77,6 +103,7 @@ function measure(el) {
   const baseline = (boxH - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
   return {
     boxH,
+    advance: m.width,                                                        // pas d'une lettre dans un mot
     inkW: m.actualBoundingBoxLeft + m.actualBoundingBoxRight,               // largeur visible
     inkH: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent,           // hauteur visible
     bottomGap: boxH - (baseline + m.actualBoundingBoxDescent),               // vide sous le glyphe
@@ -98,8 +125,12 @@ function frame(now) {
 
   for (const l of letters) l.t += dt;
 
+  // pause assez longue : le mot tombe. Pendant la frappe, les lettres glissent vers leur place.
+  if (word.length && now - lastKey > WORD_DELAY) releaseWord();
+  for (const l of word) l.x += (l.tx - l.x) * Math.min(1, dt * 18);
+
   // les lettres du bas d'abord, pour que celles du dessus voient leur appui à jour
-  const falling = letters.filter(l => l.t >= PULSE_TIME);
+  const falling = letters.filter(l => l.released);
   falling.sort((a, b) => bottomOf(b) - bottomOf(a));
 
   for (const l of falling) {

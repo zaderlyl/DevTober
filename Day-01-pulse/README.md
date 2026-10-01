@@ -1,12 +1,14 @@
 # Day 01 - Pulse
 
-Chaque touche pressée fait apparaître sa lettre au centre de l'écran, avec un battement, avant qu'elle tombe et s'empile. Un clic envoie une onde (un "pulse") qui pousse et fait vibrer les lettres sur son passage.
+Chaque touche pressée fait apparaître sa lettre au centre de l'écran, avec un battement. Si on tape assez vite, les lettres s'alignent et forment un mot, qui tombe d'un seul bloc dès qu'on s'arrête. Un clic envoie une onde (un "pulse") qui pousse et fait vibrer les lettres sur son passage.
 
 ## Lancer
 Ouvrir `index.html` dans un navigateur. Aucune dépendance.
 
 ## Interactions
-- **Touche** : fait apparaître la lettre au centre. Elle bat, puis tombe.
+- **Touche** : fait apparaître la lettre au centre. Elle bat, et les lettres déjà tapées glissent pour la laisser s'aligner avec elles.
+- **Pause de 0,6 s** (ou **espace**) : le mot tombe d'un bloc. Une pause plus longue entre deux séries de lettres donne deux mots.
+- Un mot qui dépasse 90 % de la largeur de l'écran tombe tout seul.
 - **Clic** : une zone part du curseur, grossit et se dissipe. Son front pousse et fait trembler les lettres qu'il traverse.
 
 ## Lien avec le mot
@@ -24,4 +26,4 @@ Le *pulse* est présent à trois niveaux :
 - **Vibration** : décalage aléatoire et petite rotation appliqués au rendu seulement, sans toucher à la physique, avec une amplitude qui s'éteint exponentiellement.
 
 ## Réglages
-Les constantes en haut du script : `GRAVITY`, `HALO_FORCE`, `HALO_BAND`, `SHAKE_MAX`, `SHAKE_DECAY`, `COLLISION_BOUNCE`.
+Les constantes en haut du script : `WORD_DELAY` (la pause qui fait tomber le mot), `GRAVITY`, `HALO_FORCE`, `HALO_BAND`, `SHAKE_MAX`, `SHAKE_DECAY`, `COLLISION_BOUNCE`.
