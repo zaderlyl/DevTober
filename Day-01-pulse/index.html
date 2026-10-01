@@ -8,6 +8,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: #1f9d55; overflow: hidden; font-family: ui-monospace, Menlo, monospace; }
   .hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; opacity: .4; font-size: 13px; letter-spacing: .15em; text-transform: uppercase; }
+  .timer {
+    position: fixed; left: 50%; top: 50%;
+    height: 6px; border-radius: 3px; background: #fff;
+    opacity: 0; transition: opacity .2s, width .15s;
+    transform-origin: center;
+    pointer-events: none;
+  }
   .zone {
     position: fixed; left: 50%; top: 50%;
     width: 200px; height: 200px; border-radius: 50%;
@@ -30,7 +37,8 @@
 </style>
 </head>
 <body>
-<div class="hint">tape vite pour former un mot</div>
+<div class="hint">tape vite pour former un mot &nbsp;·&nbsp; clique pour envoyer une onde</div>
+<div class="timer" id="timer"></div>
 
 <script>
 const GRAVITY = 2400;      // px/s²
@@ -46,6 +54,7 @@ const SHAKE_MAX = 10;     // amplitude max de la vibration (px)
 const SHAKE_DECAY = 7;     // vitesse d'extinction de la vibration
 
 const letters = [];
+const timer = document.getElementById('timer');
 let word = [];      // lettres en cours de frappe : alignées au centre, pas encore tombées
 let lastKey = 0;    // instant de la dernière touche
 
@@ -128,6 +137,18 @@ function frame(now) {
   // pause assez longue : le mot tombe. Pendant la frappe, les lettres glissent vers leur place.
   if (word.length && now - lastKey > WORD_DELAY) releaseWord();
   for (const l of word) l.x += (l.tx - l.x) * Math.min(1, dt * 18);
+
+  // barre de temps sous le mot : elle se vide pendant la pause, on voit quand il va tomber
+  if (word.length) {
+    const total = word.reduce((w, l) => w + l.advance, 0);
+    const remaining = Math.max(0, 1 - (now - lastKey) / WORD_DELAY);
+    timer.style.width = total + 'px';
+    timer.style.top = (bottomOf(word[0]) + 40) + 'px';
+    timer.style.transform = `translateX(-50%) scaleX(${remaining})`;
+    timer.style.opacity = '.85';
+  } else {
+    timer.style.opacity = '0';
+  }
 
   // les lettres du bas d'abord, pour que celles du dessus voient leur appui à jour
   const falling = letters.filter(l => l.released);

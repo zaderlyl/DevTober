@@ -8,6 +8,7 @@ Ouvrir `index.html` dans un navigateur. Aucune dépendance.
 ## Interactions
 - **Touche** : fait apparaître la lettre au centre. Elle bat, et les lettres déjà tapées glissent pour la laisser s'aligner avec elles.
 - **Pause de 0,6 s** (ou **espace**) : le mot tombe d'un bloc. Une pause plus longue entre deux séries de lettres donne deux mots.
+- Une **barre de temps** sous le mot se vide pendant la pause et se remplit à chaque touche : on voit qu'on peut continuer à taper pour prolonger le mot, et quand il va tomber.
 - Un mot qui dépasse 90 % de la largeur de l'écran tombe tout seul.
 - **Clic** : une zone part du curseur, grossit et se dissipe. Son front pousse et fait trembler les lettres qu'il traverse.
 
