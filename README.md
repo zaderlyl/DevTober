@@ -48,14 +48,14 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 
 Un dossier par jour, nommé `Day-XX-mot` (ex : `Day-01-pulse`). Chaque dossier contient :
 
-- le code du projet (le plus souvent un `index.html` à ouvrir dans un navigateur) ;
+- le code du projet (le plus souvent une page HTML, ex : `pulse.html`, à ouvrir dans un navigateur) ;
 - un `README.md` qui explique le code et **en quoi il correspond au mot**.
 
 ```
 DevTober/
 ├── README.md
 ├── Day-01-pulse/
-│   ├── index.html
+│   ├── pulse.html
 │   └── README.md
 ├── Day-02-loop/
 └── ...

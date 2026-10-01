@@ -3,7 +3,7 @@
 Chaque touche pressée fait apparaître sa lettre au centre de l'écran, avec un battement. Si on tape assez vite, les lettres s'alignent et forment un mot, qui tombe d'un seul bloc dès qu'on s'arrête. Un clic envoie une onde (un "pulse") qui pousse et fait vibrer les lettres sur son passage.
 
 ## Lancer
-Ouvrir `index.html` dans un navigateur. Aucune dépendance.
+Ouvrir `pulse.html` dans un navigateur. Aucune dépendance.
 
 ## Interactions
 - **Touche** : fait apparaître la lettre au centre. Elle bat, et les lettres déjà tapées glissent pour la laisser s'aligner avec elles.
