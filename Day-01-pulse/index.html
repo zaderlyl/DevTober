@@ -31,8 +31,22 @@ document.addEventListener('keydown', e => {
   el.className = 'letter';
   el.textContent = e.key.toUpperCase();
   document.body.appendChild(el);
-  letters.push({ el, t: 0, y: 0, vy: 0, settled: false });
+  letters.push({ el, t: 0, y: 0, vy: 0, settled: false, ...measure(el) });
 });
+
+// mesure le vrai dessin du glyphe : la boîte de la lettre contient du vide sous la ligne de base
+const measureCtx = document.createElement('canvas').getContext('2d');
+function measure(el) {
+  const boxH = el.offsetHeight;
+  measureCtx.font = getComputedStyle(el).font;
+  const m = measureCtx.measureText(el.textContent);
+  const baseline = (boxH - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
+  return {
+    boxH,
+    inkH: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent,           // hauteur visible
+    bottomGap: boxH - (baseline + m.actualBoundingBoxDescent),               // vide sous le glyphe
+  };
+}
 
 let last = performance.now();
 function frame(now) {
@@ -47,23 +61,23 @@ function frame(now) {
       // pulse : monte à 1.5 puis revient à 1
       const p = l.t / PULSE_TIME;
       scale = 1 + 0.5 * Math.sin(p * Math.PI);
-    } else {
+    } else if (!l.settled) {
       l.vy += GRAVITY * dt;
       l.y += l.vy * dt;
     }
 
-    l.el.style.transform = `translate(-50%, calc(-50% + ${l.y}px)) scale(${scale})`;
-
-    // sol : bord bas de la fenêtre, remonté de la hauteur des lettres déjà posées
+    // sol : bord bas de la fenêtre, remonté de la hauteur visible des lettres déjà posées
     if (!l.settled) {
-      const stack = letters.reduce((h, o) => o.settled ? h + o.el.offsetHeight : h, 0);
-      const floorY = window.innerHeight / 2 - l.el.offsetHeight / 2 - stack;
+      const stack = letters.reduce((h, o) => o.settled ? h + o.inkH : h, 0);
+      const floorY = window.innerHeight / 2 - l.boxH / 2 + l.bottomGap - stack;
       if (l.y >= floorY) {
         l.y = floorY;
         l.vy = 0;
         l.settled = true;
       }
     }
+
+    l.el.style.transform = `translate(-50%, calc(-50% + ${l.y}px)) scale(${scale})`;
   }
   requestAnimationFrame(frame);
 }
