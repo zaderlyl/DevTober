@@ -13,7 +13,9 @@ const MAX_BYTES  = 20480;                  // 20 Ko
 const KEEP_FILES = 50;                     // les plus anciens sont supprimés au-delà
 const RATE_MAX   = 10;                     // envois par minute et par visiteur
 const DIR        = __DIR__ . '/uploads';
-const NAME_RE    = '/^\d{8}-\d{6}-[a-f0-9]{8}\.txt$/';   // le seul format de nom que ce script crée et accepte de lire
+// le seul format de nom que ce script crée et accepte de lire : date-heure-hasard, puis (facultatif) le nom d'origine nettoyé, et toujours .txt à la fin
+// ex. 20261002-154317-d9ae8adb-test.html.txt : les seuls caractères permis sont a-z 0-9 _ - et un point, jamais de / ni de ..
+const NAME_RE    = '/^\d{8}-\d{6}-[a-f0-9]{8}(?:-[a-z0-9_-]{1,30}\.(?:txt|html))?\.txt$/';
 const GUARD      = "<?php http_response_code(404); exit; ?>\n";
 
 header('Access-Control-Allow-Origin: *');  // la page est sur une autre origine : elle doit pouvoir lire la réponse
@@ -125,7 +127,10 @@ if (strlen($content) < 1 || strlen($content) > MAX_BYTES) fail(400, 'taille inva
 // du vrai texte : pas d'octet nul (signe d'un fichier binaire) et de l'UTF-8 valide
 if (strpos($content, "\0") !== false || !mb_check_encoding($content, 'UTF-8')) fail(400, 'ce fichier n\'est pas du texte UTF-8');
 
-$name = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . '.txt';
+// le nom d'origine est gardé pour qu'on s'y retrouve, mais nettoyé (a-z 0-9 _ -) et suivi de .txt : il reste du texte brut
+$base = trim((string) preg_replace('/[^a-z0-9_-]+/', '-', strtolower(pathinfo((string) $f['name'], PATHINFO_FILENAME))), '-');
+$base = substr($base, 0, 30);
+$name = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . ($base !== '' ? '-' . $base . '.' . $kind : '') . '.txt';
 if (file_put_contents(DIR . '/' . $name, $content, LOCK_EX) === false) fail(500, 'écriture impossible');
 
 // on garde les KEEP_FILES derniers fichiers
