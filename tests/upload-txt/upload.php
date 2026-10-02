@@ -17,6 +17,7 @@ const GUARD      = "<?php http_response_code(404); exit; ?>\n";
 header('Access-Control-Allow-Origin: *');  // la page est sur une autre origine : elle doit pouvoir lire la réponse
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
+
 function fail(int $code, string $msg) {
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
