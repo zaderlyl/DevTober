@@ -25,6 +25,7 @@
   }
   .controls input::placeholder { color: rgba(255,255,255,.55); }
   #ttl { width: 72px; }
+  #msg { width: min(260px, 78vw); }
   #iut { width: min(360px, 78vw); }
   button {
     font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
@@ -51,10 +52,15 @@
   .ttl small { display: block; font-size: 10px; font-weight: 400; letter-spacing: .12em; opacity: .7; margin-bottom: 2px; }
 
   .packet, .spark { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--ink); pointer-events: none; }
-  .packet { width: 22px; height: 22px; margin: -11px 0 0 -11px; box-shadow: 0 0 18px rgba(255,255,255,.8); opacity: 0; }
+  /* le paquet est une enveloppe : un conteneur qui transporte le message */
+  .packet { width: 36px; height: 25px; margin: -12px 0 0 -18px; border-radius: 5px; box-shadow: 0 0 18px rgba(255,255,255,.8); opacity: 0; }
+  .packet::before {
+    content: ''; position: absolute; left: 0; top: 0;
+    border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 13px solid rgba(31,157,85,.45);
+  }
   .packet .label {
-    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-    font-size: 11px; font-weight: 700; white-space: nowrap; letter-spacing: .04em;
+    position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; font-weight: 700; white-space: pre; text-align: center; letter-spacing: .04em; line-height: 1.5;
   }
   .spark { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
 
@@ -91,10 +97,12 @@
   <p class="sub">Un paquet fait des allers-retours entre un serveur GitHub et un serveur IUT, avec le navigateur comme relais. Chaque aller-retour lui coûte une vie (TTL), jusqu'à ce qu'il se dissipe.</p>
 
   <div class="controls">
+    <label>Message <input id="msg" type="text" maxlength="140" value="Salut depuis GitHub !" placeholder="Écris ton message…"></label>
     <label>TTL <input id="ttl" type="number" min="1" max="16" value="8"></label>
     <label>URL du ping.php (IUT) <input id="iut" type="url" placeholder="https://…/ping.php"></label>
     <button id="send">Envoyer</button>
   </div>
+  <p class="note">Le message est écrit sur le serveur de l'IUT à chaque arrivée, et visible par tous. <a id="inbox" href="#" target="_blank" rel="noopener">Ouvrir la réception en direct ↗</a></p>
   <p class="note" id="note"></p>
 
   <div class="stage" id="stage">
@@ -125,11 +133,16 @@ const $ = id => document.getElementById(id);
 const stage = $('stage'), packet = $('packet'), label = $('label'), log = $('log'), note = $('note');
 const ttlInput = $('ttl'), iutInput = $('iut'), sendBtn = $('send'), ttlNow = $('ttl-now');
 const sentBox = $('sent'), gotBox = $('got'), traceBox = $('trace');
+const msgInput = $('msg'), inbox = $('inbox');
 const nodes = { github: $('n-github'), browser: $('n-browser'), iut: $('n-iut') };
 
 // l'URL IUT est retenue d'une visite à l'autre
 iutInput.value = IUT_URL;
 try { iutInput.value = localStorage.getItem('devtober-iut-url') || IUT_URL; } catch (e) {}
+// le lien vers la page de réception : le ping.php ouvert tel quel dans un navigateur
+const syncInbox = () => { inbox.href = iutInput.value.trim() || '#'; };
+syncInbox();
+iutInput.addEventListener('input', syncInbox);
 iutInput.addEventListener('change', () => {
   try { localStorage.setItem('devtober-iut-url', iutInput.value.trim()); } catch (e) {}
 });
@@ -214,10 +227,11 @@ function addLog(html, cls = '') {
 function describeSent(side, ttl, ctx) {
   const base = side === 'iut' ? iutInput.value.trim() : GITHUB_URL;
   const rows = [['requête', 'GET ' + (base.replace(/^https?:\/\//, '') || '(aucune URL)')]];
+  const msgRow = ['message', ctx.msg ? `« ${ctx.msg} »` : '(aucun : simple ping)'];
   if (side === 'iut') {
-    rows.push(['id', ctx.id], ['ttl', String(ttl)], ['trace', ctx.trace.join(',') || '(vide : premier saut)']);
+    rows.push(['id', ctx.id], msgRow, ['ttl', String(ttl)], ['trace', ctx.trace.join(',') || '(vide : premier saut)']);
   } else {
-    rows.push(['contenu', 'fichier statique : rien à envoyer, juste une lecture']);
+    rows.push(msgRow, ['contenu', 'fichier statique : le message est transporté, rien n\'est envoyé']);
   }
   return rows;
 }
@@ -236,7 +250,9 @@ async function ping(side, ttl, ctx) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const params = side === 'iut' ? `id=${ctx.id}&ttl=${ttl}&trace=${encodeURIComponent(ctx.trace.join(','))}&` : '';
+    const params = side === 'iut'
+      ? `id=${ctx.id}&ttl=${ttl}&trace=${encodeURIComponent(ctx.trace.join(','))}&msg=${encodeURIComponent(ctx.msg)}&`
+      : '';
     const url = base + (base.includes('?') ? '&' : '?') + params + `t=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -247,15 +263,23 @@ async function ping(side, ttl, ctx) {
       ['durée', `${Math.round(ms)} ms`],
       ['taille', `${new TextEncoder().encode(text).length} octets`],
     ];
-    let next = ttl - 1;
+    let next = ttl - 1, stored = false;
 
     if (side === 'iut') {
       const data = JSON.parse(text);
       if (Number.isFinite(data.ttl)) next = data.ttl;   // le serveur décrémente
       const expected = [...ctx.trace, token].join(',');
       const echoed = data.id === ctx.id, traced = data.trace === expected;
+      stored = data.stored === true;
       rows.push(
         ['id', echoed ? `${data.id}  ✓ identique à celui envoyé` : `${data.id ?? 'absent'}  ✗ non renvoyé (ancien ping.php ?)`, echoed ? '' : 'bad'],
+      );
+      if (ctx.msg) {
+        rows.push(stored
+          ? ['message', `« ${data.msg} »  ✓ écrit sur le serveur · arrivée n°${data.count}`, 'changed']
+          : ['message', `non écrit (${data.why ?? 'ancien ping.php ?'})`, 'bad']);
+      }
+      rows.push(
         ['ttl', `${ttl} → ${data.ttl}`, 'changed'],
         ['trace', data.trace ?? 'absente', traced ? 'changed' : 'bad'],
         ['vu par le serveur', data.origin ? `une page venant de ${data.origin}` : 'origine inconnue'],
@@ -265,13 +289,14 @@ async function ping(side, ttl, ctx) {
       // fichier statique : on affiche ce qu'il contient, et c'est le navigateur qui décrémente
       let body = null;
       try { body = JSON.parse(text); } catch (e) {}
+      if (ctx.msg) rows.push(['message', 'transporté par le navigateur · rien n\'est écrit sur GitHub']);
       rows.push(
         ['contenu', body ? `{ server: "${body.server}" }  ✓ le fichier a bien été lu` : text.slice(0, 80), body ? '' : 'bad'],
         ['ttl', `${ttl} → ${ttl - 1}  (décrémenté par le navigateur)`, 'changed'],
       );
     }
     // quoi que réponde le serveur, le TTL doit baisser : la boucle se termine toujours
-    return { ttl: Math.min(next, ttl - 1), ms, real: true, token, rows };
+    return { ttl: Math.min(next, ttl - 1), ms, real: true, token, rows, stored };
   } catch (e) {
     return simulated(e.name === 'AbortError' ? 'délai dépassé' : 'injoignable');
   } finally {
@@ -288,8 +313,14 @@ async function run() {
   const max = Math.max(1, Math.min(16, parseInt(ttlInput.value, 10) || 8));
   ttlInput.value = max;
   // le paquet a une identité, et un carnet de bord qui s'allonge à chaque serveur traversé
-  const ctx = { id: Math.random().toString(16).slice(2, 6).toUpperCase().padEnd(4, '0'), trace: [] };
-  let ttl = max, hop = 0, real = 0;
+  const ctx = {
+    id: Math.random().toString(16).slice(2, 6).toUpperCase().padEnd(4, '0'),
+    msg: msgInput.value.replace(/\s+/g, ' ').trim().slice(0, 140),   // le contenu du conteneur
+    trace: [],
+  };
+  const short = ctx.msg.length > 26 ? ctx.msg.slice(0, 25) + '…' : ctx.msg;
+  const tag = ttl => `#${ctx.id} · TTL ${ttl}` + (short ? `\n« ${short} »` : '');
+  let ttl = max, hop = 0, real = 0, written = 0;
 
   log.innerHTML = '';
   traceBox.replaceChildren();
@@ -303,7 +334,7 @@ async function run() {
 
   while (ttl > 0) {
     const side = hop % 2 === 0 ? 'iut' : 'github';
-    label.textContent = `#${ctx.id} · TTL ${ttl}`;
+    label.textContent = tag(ttl);
     fill(sentBox, describeSent(side, ttl, ctx), '');
     fill(gotBox, [['réponse', 'en attente…']], '');
 
@@ -314,11 +345,12 @@ async function run() {
     fill(gotBox, res.rows, '');
     ctx.trace.push(res.token);
     addChip(side, res.token, !res.real, res.ms);
-    label.textContent = `#${ctx.id} · TTL ${res.ttl}`;
+    label.textContent = tag(res.ttl);
     await travel(side, 'browser', ttl, res.ttl, max);   // retour : le TTL est perdu en chemin
 
     hop++;
     if (res.real) real++;
+    if (res.stored) written++;
     addLog(
       `<span class="hop">${String(hop).padStart(2, '0')}</span>` +
       `<span class="ttlc">TTL ${ttl} → ${res.ttl}</span>` +
@@ -333,6 +365,7 @@ async function run() {
   label.textContent = '';
   dissipate('browser');
   addLog(`Paquet #${ctx.id} dissipé après ${hop} sauts (${real} réels, ${hop - real} simulés).`, 'done');
+  if (ctx.msg) addLog(`Message écrit ${written} fois sur le serveur IUT.`, 'done');
   await sleep(900);
   running = false;
   sendBtn.disabled = false;
