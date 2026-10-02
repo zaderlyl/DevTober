@@ -1,0 +1,248 @@
+const IUT_URL = 'https://web-mmi2.iutbeziers.fr/~lilian.cornet/ping.php';   // valeur par défaut du champ
+const GITHUB_URL = 'https://zaderlyl.github.io/DevTober/Day-02-loop/pong.json';
+const LEG_MS = 380;          // durée d'un trajet affiché (le vrai réseau est plus rapide, on le ralentit pour le voir)
+const TIMEOUT_MS = 4000;     // au-delà, le serveur est considéré injoignable
+
+const $ = id => document.getElementById(id);
+const stage = $('stage'), packet = $('packet'), label = $('label'), log = $('log'), note = $('note');
+const ttlInput = $('ttl'), iutInput = $('iut'), sendBtn = $('send'), ttlNow = $('ttl-now');
+const sentBox = $('sent'), gotBox = $('got'), traceBox = $('trace');
+const msgInput = $('msg'), inbox = $('inbox');
+const nodes = { github: $('n-github'), browser: $('n-browser'), iut: $('n-iut') };
+
+// l'URL IUT est retenue d'une visite à l'autre
+iutInput.value = IUT_URL;
+try { iutInput.value = localStorage.getItem('devtober-iut-url') || IUT_URL; } catch (e) {}
+// le lien vers la page de réception : le ping.php ouvert tel quel dans un navigateur
+const syncInbox = () => { inbox.href = iutInput.value.trim() || '#'; };
+syncInbox();
+iutInput.addEventListener('input', syncInbox);
+iutInput.addEventListener('change', () => {
+  try { localStorage.setItem('devtober-iut-url', iutInput.value.trim()); } catch (e) {}
+});
+
+// position du centre d'un nœud dans la scène
+function center(name) {
+  const s = stage.getBoundingClientRect(), r = nodes[name].getBoundingClientRect();
+  return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 };
+}
+
+const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// fait voyager le paquet d'un nœud à l'autre ; sa visibilité suit le TTL restant
+function travel(from, to, ttlFrom, ttlTo, ttlMax) {
+  const a = center(from), b = center(to);
+  const o = ttl => 0.2 + 0.8 * (ttl / ttlMax);
+  return new Promise(resolve => {
+    const start = performance.now();
+    (function tick(now) {
+      const p = Math.min(1, (now - start) / LEG_MS), e = ease(p);
+      packet.style.transform = `translate(${a.x + (b.x - a.x) * e}px, ${a.y + (b.y - a.y) * e}px)`;
+      packet.style.opacity = o(ttlFrom + (ttlTo - ttlFrom) * p);
+      p < 1 ? requestAnimationFrame(tick) : resolve();
+    })(start);
+  });
+}
+
+// le paquet se dissipe : une gerbe de particules qui s'éteignent
+function dissipate(at) {
+  const c = center(at);
+  packet.style.opacity = 0;
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.style.transform = `translate(${c.x}px, ${c.y}px)`;
+    stage.appendChild(s);
+    const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 90;
+    const anim = s.animate([
+      { transform: `translate(${c.x}px, ${c.y}px) scale(1)`, opacity: .9 },
+      { transform: `translate(${c.x + Math.cos(ang) * dist}px, ${c.y + Math.sin(ang) * dist}px) scale(0)`, opacity: 0 },
+    ], { duration: 700 + Math.random() * 400, easing: 'ease-out' });
+    anim.onfinish = () => s.remove();
+  }
+}
+
+// ---- volet envoyé / reçu : tout passe par textContent, les réponses des serveurs ne sont jamais interprétées comme du HTML
+function fill(box, rows, emptyMsg) {
+  box.replaceChildren();
+  if (!rows.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = emptyMsg;
+    box.appendChild(p);
+    return;
+  }
+  for (const [k, v, cls] of rows) {
+    const row = document.createElement('div');
+    row.className = 'kv';
+    const kk = document.createElement('span'); kk.className = 'k'; kk.textContent = k;
+    const vv = document.createElement('span'); vv.className = 'v' + (cls ? ' ' + cls : ''); vv.textContent = v;
+    row.append(kk, vv);
+    box.appendChild(row);
+  }
+}
+
+function addChip(side, token, simulated, ms) {
+  const c = document.createElement('span');
+  c.className = 'chip' + (simulated ? ' sim' : '');
+  c.textContent = `${token} · ${Math.round(ms)} ms${simulated ? ' · simulé' : ''}`;
+  traceBox.appendChild(c);
+}
+
+function addLog(html, cls = '') {
+  const li = document.createElement('li');
+  li.className = cls;
+  li.innerHTML = html;
+  log.appendChild(li);
+}
+
+// ce qui part vers le serveur
+function describeSent(side, ttl, ctx) {
+  const base = side === 'iut' ? iutInput.value.trim() : GITHUB_URL;
+  const rows = [['requête', 'GET ' + (base.replace(/^https?:\/\//, '') || '(aucune URL)')]];
+  const msgRow = ['message', ctx.msg ? `« ${ctx.msg} »` : '(aucun : simple ping)'];
+  if (side === 'iut') {
+    rows.push(['id', ctx.id], msgRow, ['ttl', String(ttl)], ['trace', ctx.trace.join(',') || '(vide : premier saut)']);
+  } else {
+    rows.push(msgRow, ['contenu', 'fichier statique : le message est transporté, rien n\'est envoyé']);
+  }
+  return rows;
+}
+
+// un vrai aller-retour réseau ; si le serveur est injoignable, le saut est simulé (et indiqué comme tel)
+async function ping(side, ttl, ctx) {
+  const t0 = performance.now();
+  const base = side === 'iut' ? iutInput.value.trim() : GITHUB_URL;
+  const token = `${side}@${ctx.trace.length + 1}`;
+  const simulated = why => ({
+    ttl: ttl - 1, ms: 25 + Math.random() * 60, real: false, why, token,
+    rows: [['résultat', `aucune réponse (${why}) : saut simulé`, 'bad']],
+  });
+  if (!base) return simulated('pas d\'URL');
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const params = side === 'iut'
+      ? `id=${ctx.id}&ttl=${ttl}&trace=${encodeURIComponent(ctx.trace.join(','))}&msg=${encodeURIComponent(ctx.msg)}&`
+      : '';
+    const url = base + (base.includes('?') ? '&' : '?') + params + `t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const ms = performance.now() - t0;
+    const rows = [
+      ['statut', `${res.status} ${res.statusText || 'OK'}`],
+      ['durée', `${Math.round(ms)} ms`],
+      ['taille', `${new TextEncoder().encode(text).length} octets`],
+    ];
+    let next = ttl - 1, stored = false;
+
+    if (side === 'iut') {
+      const data = JSON.parse(text);
+      if (Number.isFinite(data.ttl)) next = data.ttl;   // le serveur décrémente
+      const expected = [...ctx.trace, token].join(',');
+      const echoed = data.id === ctx.id, traced = data.trace === expected;
+      stored = data.stored === true;
+      rows.push(
+        ['id', echoed ? `${data.id}  ✓ identique à celui envoyé` : `${data.id ?? 'absent'}  ✗ non renvoyé (ancien ping.php ?)`, echoed ? '' : 'bad'],
+      );
+      if (ctx.msg) {
+        rows.push(stored
+          ? ['message', `« ${data.msg} »  ✓ écrit sur le serveur · arrivée n°${data.count}`, 'changed']
+          : ['message', `non écrit (${data.why ?? 'ancien ping.php ?'})`, 'bad']);
+      }
+      rows.push(
+        ['ttl', `${ttl} → ${data.ttl}`, 'changed'],
+        ['trace', data.trace ?? 'absente', traced ? 'changed' : 'bad'],
+        ['vu par le serveur', data.origin ? `une page venant de ${data.origin}` : 'origine inconnue'],
+      );
+      if (Number.isFinite(data.time)) rows.push(['heure serveur', new Date(data.time).toISOString().slice(11, 23) + ' UTC']);
+    } else {
+      // fichier statique : on affiche ce qu'il contient, et c'est le navigateur qui décrémente
+      let body = null;
+      try { body = JSON.parse(text); } catch (e) {}
+      if (ctx.msg) rows.push(['message', 'transporté par le navigateur · rien n\'est écrit sur GitHub']);
+      rows.push(
+        ['contenu', body ? `{ server: "${body.server}" }  ✓ le fichier a bien été lu` : text.slice(0, 80), body ? '' : 'bad'],
+        ['ttl', `${ttl} → ${ttl - 1}  (décrémenté par le navigateur)`, 'changed'],
+      );
+    }
+    // quoi que réponde le serveur, le TTL doit baisser : la boucle se termine toujours
+    return { ttl: Math.min(next, ttl - 1), ms, real: true, token, rows, stored };
+  } catch (e) {
+    return simulated(e.name === 'AbortError' ? 'délai dépassé' : 'injoignable');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+let running = false;
+async function run() {
+  if (running) return;
+  running = true;
+  sendBtn.disabled = true;
+
+  const max = Math.max(1, Math.min(16, parseInt(ttlInput.value, 10) || 8));
+  ttlInput.value = max;
+  // le paquet a une identité, et un carnet de bord qui s'allonge à chaque serveur traversé
+  const ctx = {
+    id: Math.random().toString(16).slice(2, 6).toUpperCase().padEnd(4, '0'),
+    msg: msgInput.value.replace(/\s+/g, ' ').trim().slice(0, 140),   // le contenu du conteneur
+    trace: [],
+  };
+  const short = ctx.msg.length > 26 ? ctx.msg.slice(0, 25) + '…' : ctx.msg;
+  const tag = ttl => `#${ctx.id} · TTL ${ttl}` + (short ? `\n« ${short} »` : '');
+  let ttl = max, hop = 0, real = 0, written = 0;
+
+  log.innerHTML = '';
+  traceBox.replaceChildren();
+  fill(sentBox, [], '');
+  fill(gotBox, [], '');
+  note.textContent = iutInput.value.trim() ? '' : 'Pas d\'URL IUT : ses sauts seront simulés. Renseigne l\'URL du ping.php pour des mesures réelles.';
+  ttlNow.textContent = ttl;
+  const c0 = center('browser');
+  packet.style.transform = `translate(${c0.x}px, ${c0.y}px)`;
+  packet.style.opacity = 1;
+
+  while (ttl > 0) {
+    const side = hop % 2 === 0 ? 'iut' : 'github';
+    label.textContent = tag(ttl);
+    fill(sentBox, describeSent(side, ttl, ctx), '');
+    fill(gotBox, [['réponse', 'en attente…']], '');
+
+    // le paquet part vers le serveur pendant que la vraie requête est en vol
+    const [res] = await Promise.all([ping(side, ttl, ctx), travel('browser', side, ttl, ttl, max)]);
+    nodes[side].classList.toggle('sim', !res.real);
+    $('lat-' + side).textContent = `${Math.round(res.ms)} ms · ${res.real ? 'réel' : 'simulé'}`;
+    fill(gotBox, res.rows, '');
+    ctx.trace.push(res.token);
+    addChip(side, res.token, !res.real, res.ms);
+    label.textContent = tag(res.ttl);
+    await travel(side, 'browser', ttl, res.ttl, max);   // retour : le TTL est perdu en chemin
+
+    hop++;
+    if (res.real) real++;
+    if (res.stored) written++;
+    addLog(
+      `<span class="hop">${String(hop).padStart(2, '0')}</span>` +
+      `<span class="ttlc">TTL ${ttl} → ${res.ttl}</span>` +
+      `<span class="who">${side.toUpperCase()}</span>` +
+      `<span class="ms">${Math.round(res.ms)} ms</span>` +
+      `<span class="tag">${res.real ? 'réel' : 'simulé (' + res.why + ')'}</span>`
+    );
+    ttl = res.ttl;
+    ttlNow.textContent = ttl;
+  }
+
+  label.textContent = '';
+  dissipate('browser');
+  addLog(`Paquet #${ctx.id} dissipé après ${hop} sauts (${real} réels, ${hop - real} simulés).`, 'done');
+  if (ctx.msg) addLog(`Message écrit ${written} fois sur le serveur IUT.`, 'done');
+  await sleep(900);
+  running = false;
+  sendBtn.disabled = false;
+}
+
+sendBtn.addEventListener('click', run);

@@ -48,7 +48,7 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 
 Un dossier par jour, nommé `Day-XX-mot` (ex : `Day-01-pulse`). Chaque dossier contient :
 
-- le code du projet (le plus souvent une page HTML, ex : `pulse.html`, à ouvrir dans un navigateur) ;
+- le code du projet, avec **un fichier par langage** : une page HTML, son `.css` et son `.js` (ex : `pulse.html`, `pulse.css`, `pulse.js`), à ouvrir dans un navigateur ;
 - un `README.md` qui explique le code et **en quoi il correspond au mot**.
 
 La page `index.html` à la racine est le **hub** : une grille des 31 mots où chaque jour terminé est cliquable. Pour y ajouter un projet, il suffit de renseigner son chemin à côté du mot dans la liste `DAYS` du script.
@@ -56,11 +56,20 @@ La page `index.html` à la racine est le **hub** : une grille des 31 mots où ch
 ```
 DevTober/
 ├── README.md
-├── index.html        (le hub)
+├── index.html        (le hub : page, hub.css, hub.js)
+├── hub.css
+├── hub.js
 ├── Day-01-pulse/
 │   ├── pulse.html
+│   ├── pulse.css
+│   ├── pulse.js
 │   └── README.md
 ├── Day-02-loop/
+│   ├── loop.html / loop.css / loop.js
+│   ├── ping.php          (côté serveur IUT)
+│   ├── inbox/            (page de réception servie par ping.php)
+│   ├── pong.json
+│   └── README.md
 └── ...
 ```
 

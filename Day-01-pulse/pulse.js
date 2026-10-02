@@ -1,0 +1,223 @@
+const GRAVITY = 2400;      // px/s²
+const PULSE_TIME = 0.35;   // durée du battement d'une lettre qui apparaît
+const WORD_DELAY = 600;    // ms sans frappe avant que le mot tombe
+const HALO_TIME = 0.9;     // durée du halo (identique à l'animation CSS)
+const HALO_BASE_R = 100;   // rayon de base du halo (200px / 2)
+const HALO_BAND = 140;     // épaisseur du front qui pousse
+const HALO_FORCE = 9000;   // px/s² au maximum
+const COLLISION_PASSES = 4;     // itérations de séparation par frame
+const COLLISION_BOUNCE = 0.25;  // rebond entre deux lettres (0 = mou, 1 = élastique)
+const SHAKE_MAX = 10;     // amplitude max de la vibration (px)
+const SHAKE_DECAY = 7;     // vitesse d'extinction de la vibration
+
+const letters = [];
+const timer = document.getElementById('timer');
+let word = [];      // lettres en cours de frappe : alignées au centre, pas encore tombées
+let lastKey = 0;    // instant de la dernière touche
+
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); releaseWord(); return; }   // espace : le mot tombe tout de suite
+  if (e.key.length !== 1) return;
+  const el = document.createElement('div');
+  el.className = 'letter';
+  el.textContent = e.key.toUpperCase();
+  document.body.appendChild(el);
+  // x, y : décalage par rapport au centre de l'écran
+  const l = { el, t: 0, x: 0, y: 0, vx: 0, vy: 0, shake: 0, tx: 0, released: false, ...measure(el) };
+  letters.push(l);
+  word.push(l);
+  lastKey = performance.now();
+  layoutWord();
+  l.x = l.tx;   // la nouvelle lettre apparaît à sa place, les autres glissent pour lui faire de la place
+  if (word.length * l.advance > window.innerWidth * 0.9) releaseWord();   // mot trop large : il tombe
+});
+
+// centre le mot : chaque lettre vise sa place (tx), le rendu glisse vers elle
+function layoutWord() {
+  const total = word.reduce((w, l) => w + l.advance, 0);
+  let x = -total / 2;
+  for (const l of word) {
+    l.tx = x + l.advance / 2;
+    x += l.advance;
+  }
+}
+
+// le mot est lâché : ses lettres passent sous gravité, côte à côte
+function releaseWord() {
+  for (const l of word) l.released = true;
+  word = [];
+}
+
+// clic : une zone grossit, se dissipe et pousse les lettres sur son passage
+const halos = [];
+document.addEventListener('pointerdown', e => {
+  const zone = document.createElement('div');
+  zone.className = 'zone';
+  zone.style.left = e.clientX + 'px';
+  zone.style.top = e.clientY + 'px';
+  zone.addEventListener('animationend', () => zone.remove());
+  document.body.appendChild(zone);
+  halos.push({ x: e.clientX, y: e.clientY, t: 0 });
+});
+
+// mesure le vrai dessin du glyphe : la boîte de la lettre contient du vide sous la ligne de base
+const measureCtx = document.createElement('canvas').getContext('2d');
+function measure(el) {
+  const boxH = el.offsetHeight;
+  measureCtx.font = getComputedStyle(el).font;
+  const m = measureCtx.measureText(el.textContent);
+  const baseline = (boxH - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2 + m.fontBoundingBoxAscent;
+  return {
+    boxH,
+    advance: m.width,                                                        // pas d'une lettre dans un mot
+    inkW: m.actualBoundingBoxLeft + m.actualBoundingBoxRight,               // largeur visible
+    inkH: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent,           // hauteur visible
+    bottomGap: boxH - (baseline + m.actualBoundingBoxDescent),               // vide sous le glyphe
+  };
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+
+  const W = window.innerWidth, H = window.innerHeight;
+
+  // avance les halos : rayon identique à l'animation CSS (scale .3 -> 4 sur 200px)
+  for (let i = halos.length - 1; i >= 0; i--) {
+    halos[i].t += dt;
+    if (halos[i].t > HALO_TIME) halos.splice(i, 1);
+  }
+
+  for (const l of letters) l.t += dt;
+
+  // pause assez longue : le mot tombe. Pendant la frappe, les lettres glissent vers leur place.
+  if (word.length && now - lastKey > WORD_DELAY) releaseWord();
+  for (const l of word) l.x += (l.tx - l.x) * Math.min(1, dt * 18);
+
+  // barre de temps sous le mot : elle se vide pendant la pause, on voit quand il va tomber
+  if (word.length) {
+    const total = word.reduce((w, l) => w + l.advance, 0);
+    const remaining = Math.max(0, 1 - (now - lastKey) / WORD_DELAY);
+    timer.style.width = total + 'px';
+    timer.style.top = (bottomOf(word[0]) + 40) + 'px';
+    timer.style.transform = `translateX(-50%) scaleX(${remaining})`;
+    timer.style.opacity = '.85';
+  } else {
+    timer.style.opacity = '0';
+  }
+
+  // les lettres du bas d'abord, pour que celles du dessus voient leur appui à jour
+  const falling = letters.filter(l => l.released);
+  falling.sort((a, b) => bottomOf(b) - bottomOf(a));
+
+  for (const l of falling) {
+    // poussée des halos : le front de l'onde pousse les lettres qu'il traverse
+    const cx = W / 2 + l.x, cy = H / 2 + l.y + l.boxH / 2 - l.bottomGap - l.inkH / 2;
+    for (const h of halos) {
+      const p = h.t / HALO_TIME;
+      const radius = HALO_BASE_R * (0.3 + 3.7 * (1 - (1 - p) * (1 - p)));
+      const dx = cx - h.x, dy = cy - h.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const band = Math.max(0, 1 - Math.abs(d - radius) / HALO_BAND);
+      if (!band) continue;
+      // petit biais vers le haut pour pouvoir décoller du sol
+      let nx = dx / d, ny = dy / d - 0.5;
+      const n = Math.hypot(nx, ny) || 1;
+      // vibration : plus forte quand le front passe sur la lettre, s'éteint ensuite (voir plus bas)
+      l.shake = Math.max(l.shake, SHAKE_MAX * (1 - p) * band);
+      const accel = HALO_FORCE * (1 - p) * band;
+      l.vx += (nx / n) * accel * dt;
+      l.vy += (ny / n) * accel * dt;
+    }
+
+    // sol : bord bas de la fenêtre, ou le haut de la lettre la plus haute juste en dessous
+    let floor = H;
+    for (const o of falling) {
+      if (o === l) continue;
+      const overlapX = Math.abs(o.x - l.x) < (l.inkW + o.inkW) / 2;
+      const topO = bottomOf(o) - o.inkH;
+      if (overlapX && topO > bottomOf(l) - l.inkH / 2) floor = Math.min(floor, topO);
+    }
+
+    l.vy += GRAVITY * dt;
+    l.x += l.vx * dt;
+    l.y += l.vy * dt;
+
+    const grounded = bottomOf(l) >= floor;
+    if (grounded) {
+      l.y -= bottomOf(l) - floor;
+      if (l.vy > 0) l.vy = 0;
+      l.vx *= Math.exp(-10 * dt);       // frottement au sol
+    } else {
+      l.vx *= Math.exp(-0.3 * dt);
+    }
+
+  }
+
+  // une lettre ne peut pas être dans une autre : on les sépare, puis on recolle aux murs
+  for (let pass = 0; pass < COLLISION_PASSES; pass++) {
+    resolveCollisions(falling);
+    for (const l of falling) {
+      const maxX = W / 2 - l.inkW / 2;
+      if (Math.abs(l.x) > maxX) {
+        l.x = Math.sign(l.x) * maxX;
+        l.vx *= -0.4;
+      }
+    }
+  }
+
+  for (const l of letters) {
+    let scale = 1;
+    if (l.t < PULSE_TIME) {
+      // pulse : monte à 1.5 puis revient à 1
+      scale = 1 + 0.5 * Math.sin((l.t / PULSE_TIME) * Math.PI);
+    }
+    // la vibration est purement visuelle : elle décale le rendu sans toucher à la physique
+    l.shake *= Math.exp(-SHAKE_DECAY * dt);
+    const jx = (Math.random() - 0.5) * 2 * l.shake;
+    const jy = (Math.random() - 0.5) * 2 * l.shake;
+    const rot = (Math.random() - 0.5) * 2 * l.shake * 0.6;
+
+    l.el.style.transform = `translate(calc(-50% + ${l.x + jx}px), calc(-50% + ${l.y + jy}px)) rotate(${rot}deg) scale(${scale})`;
+  }
+  requestAnimationFrame(frame);
+}
+
+// sépare les lettres qui se chevauchent, selon l'axe où elles pénètrent le moins
+function resolveCollisions(list) {
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const a = list[i], b = list[j];
+      const ox = (a.inkW + b.inkW) / 2 - Math.abs(a.x - b.x);
+      const oy = Math.min(bottomOf(a), bottomOf(b)) - Math.max(bottomOf(a) - a.inkH, bottomOf(b) - b.inkH);
+      // simple contact (posée sur une autre, ou côte à côte), pas un chevauchement
+      if (ox <= 0.01 || oy <= 1) continue;
+
+      if (ox < oy) {
+        // choc latéral : on écarte les deux lettres et on échange leur vitesse
+        const [left, right] = a.x < b.x || (a.x === b.x && i < j) ? [a, b] : [b, a];
+        left.x -= ox / 2;
+        right.x += ox / 2;
+        const rel = left.vx - right.vx;
+        if (rel > 0) {
+          const m = (left.vx + right.vx) / 2;
+          left.vx = m - COLLISION_BOUNCE * rel / 2;
+          right.vx = m + COLLISION_BOUNCE * rel / 2;
+        }
+      } else {
+        // choc vertical : celle du dessus remonte, celle du dessous ne peut plus monter
+        const [up, down] = bottomOf(a) < bottomOf(b) ? [a, b] : [b, a];
+        up.y -= oy;
+        up.vy = Math.min(up.vy, down.vy);
+        if (down.vy < 0) down.vy = 0;
+      }
+    }
+  }
+}
+
+// bas visible du glyphe, en coordonnées écran
+function bottomOf(l) {
+  return window.innerHeight / 2 + l.y + l.boxH / 2 - l.bottomGap;
+}
+requestAnimationFrame(frame);

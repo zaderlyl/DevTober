@@ -1,0 +1,29 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; background: #1f9d55; overflow: hidden; font-family: ui-monospace, Menlo, monospace; }
+.hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; opacity: .4; font-size: 13px; letter-spacing: .15em; text-transform: uppercase; }
+.timer {
+  position: fixed; left: 50%; top: 50%;
+  height: 6px; border-radius: 3px; background: #fff;
+  opacity: 0; transition: opacity .2s, width .15s;
+  transform-origin: center;
+  pointer-events: none;
+}
+.zone {
+  position: fixed; left: 50%; top: 50%;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,.25) 45%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(.3);
+  opacity: 0;
+  pointer-events: none;
+  animation: zone .9s ease-out forwards;
+}
+@keyframes zone {
+  0%   { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(4);  opacity: 0; }
+}
+.letter {
+  position: fixed; left: 50%; top: 50%;
+  font-size: 120px; line-height: 1; font-weight: 700; color: #fff;
+  will-change: transform;
+  pointer-events: none;
+}

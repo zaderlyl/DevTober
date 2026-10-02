@@ -162,100 +162,12 @@ if (stripos($_SERVER['HTTP_ACCEPT'] ?? '', 'text/html') === false) {
 }
 header('Content-Type: text/html; charset=utf-8');
 header('X-Robots-Tag: noindex');
-?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IUT · réception en direct</title>
-<style>
-  :root { --bg: #1f9d55; --ink: #fff; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: ui-monospace, Menlo, monospace; padding: 32px 16px 56px; }
-  main { max-width: 760px; margin: 0 auto; }
-  .top { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.35); }
-  .dot.on { background: var(--ink); box-shadow: 0 0 10px var(--ink); animation: blink 1.4s infinite; }
-  @keyframes blink { 50% { opacity: .35; } }
-  h1 { margin-top: 10px; font-size: clamp(26px, 6vw, 40px); }
-  .big { margin: 34px 0 6px; min-height: 120px; }
-  .big .msg { font-size: clamp(24px, 6vw, 44px); font-weight: 700; word-break: break-word; line-height: 1.15; }
-  .big .times { display: inline-block; margin-top: 10px; font-size: clamp(20px, 5vw, 32px); font-weight: 700; background: var(--ink); color: var(--bg); padding: 2px 14px; border-radius: 999px; }
-  .big .times.pop { animation: pop .35s ease-out; }
-  @keyframes pop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
-  .empty { font-size: 14px; opacity: .75; line-height: 1.7; max-width: 52ch; }
-  .list { list-style: none; margin-top: 26px; font-size: 13px; }
-  .list li { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.18); }
-  .list li.new { animation: slide .4s ease-out; }
-  @keyframes slide { from { opacity: 0; transform: translateY(-8px); } }
-  .list .n { opacity: .6; width: 42px; }
-  .list .t { opacity: .7; }
-  .list .m { flex: 1 1 200px; font-weight: 700; word-break: break-word; }
-  .list .meta { opacity: .7; }
-  .foot { margin-top: 28px; font-size: 12px; opacity: .65; line-height: 1.7; }
-</style>
-</head>
-<body>
-<main>
-  <div class="top"><span class="dot" id="dot"></span><span id="status">connexion…</span></div>
-  <h1>Réception IUT</h1>
 
-  <div class="big" id="big">
-    <p class="empty">Aucun message pour l'instant. Garde cette page ouverte, lance la boucle depuis la page Day 02 : chaque arrivée s'affichera ici en direct.</p>
-  </div>
-
-  <ul class="list" id="list"></ul>
-
-  <p class="foot">Les messages sont écrits par la page DevTober Day 02 · seules les 300 dernières arrivées sont conservées.</p>
-</main>
-
-<script>
-const big = document.getElementById('big'), list = document.getElementById('list');
-const dot = document.getElementById('dot'), status = document.getElementById('status');
-let seq = 0, first = true;
-
-// tout passe par textContent : un message, même piégé, n'est jamais interprété comme du HTML
-function el(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text;
-  return e;
+// la page est dans inbox/ (HTML, CSS et JS séparés) ; ses liens sont relatifs à ce fichier, d'où le dossier à côté de ping.php
+$page = __DIR__ . '/inbox/inbox.html';
+if (!is_readable($page)) {
+    http_response_code(500);
+    echo 'Dossier inbox/ manquant à côté de ping.php.';
+    exit;
 }
-
-function show(e, animate) {
-  // le gros titre : le dernier message et combien de fois il est arrivé
-  big.replaceChildren();
-  big.append(el('div', 'msg', e.msg), el('div', 'times' + (animate ? ' pop' : ''), '× ' + e.count));
-
-  const li = el('li', animate ? 'new' : '');
-  const time = new Date(e.t).toLocaleTimeString('fr-FR');
-  li.append(
-    el('span', 'n', '#' + e.n),
-    el('span', 't', time),
-    el('span', 'm', e.msg),
-    el('span', 'meta', `arrivée n°${e.count} · TTL ${e.ttl}` + (e.id ? ` · paquet ${e.id}` : ''))
-  );
-  list.prepend(li);
-  while (list.children.length > 100) list.lastChild.remove();
-}
-
-async function poll() {
-  try {
-    const res = await fetch('?live=1&since=' + seq, { cache: 'no-store' });
-    const data = await res.json();
-    for (const e of data.entries) show(e, !first);
-    seq = data.seq;
-    first = false;
-    dot.classList.add('on');
-    status.textContent = 'en direct · ' + seq + ' arrivée' + (seq > 1 ? 's' : '') + ' au total';
-  } catch (err) {
-    dot.classList.remove('on');
-    status.textContent = 'connexion perdue, nouvelle tentative…';
-  }
-  setTimeout(poll, 1000);
-}
-poll();
-</script>
-</body>
-</html>
+readfile($page);

@@ -35,7 +35,15 @@ GitHub, lui, ne peut rien écrire (c'est un fichier statique) : le message y est
 
 ## Installation
 - **GitHub :** pousser le repo et activer GitHub Pages. La page appelle `Day-02-loop/pong.json`.
-- **IUT :** déposer `ping.php` sur l'espace web. Son URL (en `https://`) est pré-remplie dans le champ de la page, et on peut la remplacer par la sienne : elle est retenue d'une visite à l'autre (`localStorage`).
+- **IUT :** déposer sur l'espace web `ping.php` **et le dossier `inbox/`** (la page de réception), l'un à côté de l'autre :
+  ```
+  ping.php        (la logique : un saut, l'écriture, le flux live)
+  inbox/
+  ├── inbox.html  (la page de réception)
+  ├── inbox.css
+  └── inbox.js
+  ```
+  La page de réception est servie par `ping.php` : on l'ouvre avec l'URL de `ping.php`, pas en ouvrant `inbox/inbox.html` directement (ses liens sont relatifs à `ping.php`). Sans le dossier `inbox/`, `ping.php` l'indique clairement. Son URL (en `https://`) est pré-remplie dans le champ de la page, et on peut la remplacer par la sienne : elle est retenue d'une visite à l'autre (`localStorage`).
 
 Le dossier de `ping.php` doit être **accessible en écriture** pour PHP : le script crée lui-même `loop-data.php` au premier message. Si la page indique « écriture impossible sur le serveur », créer ce fichier vide à la main et lui donner les droits d'écriture (`chmod 666`).
 

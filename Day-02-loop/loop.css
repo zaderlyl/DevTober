@@ -1,0 +1,84 @@
+:root { --bg: #1f9d55; --ink: #fff; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  min-height: 100vh; background: var(--bg); color: var(--ink);
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 28px 16px 48px;
+}
+main { max-width: 860px; margin: 0 auto; }
+h1 { font-size: clamp(28px, 6vw, 44px); letter-spacing: -.01em; }
+.sub { margin-top: 8px; font-size: 14px; opacity: .8; line-height: 1.5; max-width: 60ch; }
+a { color: inherit; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 28px 0 8px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+.controls input {
+  font: inherit; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); border-radius: 8px; padding: 8px 10px;
+}
+.controls input::placeholder { color: rgba(255,255,255,.55); }
+#ttl { width: 72px; }
+#msg { width: min(260px, 78vw); }
+#iut { width: min(360px, 78vw); }
+button {
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 9px 18px;
+}
+button:disabled { opacity: .5; cursor: default; }
+.note { font-size: 12px; opacity: .75; min-height: 18px; margin-bottom: 8px; }
+
+/* scène : GitHub — navigateur — IUT */
+.stage { position: relative; height: 220px; margin: 12px 0 8px; }
+.line { position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: rgba(255,255,255,.35); transform: translateY(-50%); }
+.node {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: clamp(86px, 22vw, 130px); padding: 14px 8px; text-align: center;
+  border: 2px solid var(--ink); border-radius: 16px; background: var(--bg);
+}
+.node.sim { border-style: dashed; }
+.node .name { font-weight: 700; font-size: clamp(12px, 3vw, 15px); }
+.node .lat { margin-top: 6px; font-size: 11px; opacity: .85; min-height: 14px; }
+#n-github { left: 12%; }
+#n-browser { left: 50%; }
+#n-iut { left: 88%; }
+.ttl { font-size: clamp(26px, 6vw, 38px); font-weight: 700; line-height: 1; margin-top: 4px; }
+.ttl small { display: block; font-size: 10px; font-weight: 400; letter-spacing: .12em; opacity: .7; margin-bottom: 2px; }
+
+.packet, .spark { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--ink); pointer-events: none; }
+/* le paquet est une enveloppe : un conteneur qui transporte le message */
+.packet { width: 36px; height: 25px; margin: -12px 0 0 -18px; border-radius: 5px; box-shadow: 0 0 18px rgba(255,255,255,.8); opacity: 0; }
+.packet::before {
+  content: ''; position: absolute; left: 0; top: 0;
+  border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 13px solid rgba(31,157,85,.45);
+}
+.packet .label {
+  position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; font-weight: 700; white-space: pre; text-align: center; letter-spacing: .04em; line-height: 1.5;
+}
+.spark { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
+
+/* carnet de bord du paquet */
+.trace { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; margin: 4px 0 18px; }
+.chip { font-size: 12px; padding: 4px 10px; border: 1px solid var(--ink); border-radius: 999px; }
+.chip.sim { border-style: dashed; opacity: .7; }
+
+/* volet envoyé / reçu */
+.detail { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .detail { grid-template-columns: 1fr; } }
+.card { border: 1px solid rgba(255,255,255,.35); border-radius: 12px; padding: 12px 14px; background: rgba(0,0,0,.1); min-height: 150px; }
+.card h2 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .75; margin-bottom: 10px; }
+.kv { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
+.kv .k { flex: 0 0 108px; opacity: .65; }
+.kv .v { word-break: break-all; }
+.kv .v.changed { background: var(--ink); color: var(--bg); padding: 0 6px; border-radius: 4px; }
+.kv .v.bad { text-decoration: underline wavy; }
+.empty { font-size: 13px; opacity: .6; line-height: 1.6; }
+
+.log { list-style: none; margin-top: 22px; font-size: 13px; line-height: 1.9; }
+.log li { display: flex; flex-wrap: wrap; gap: 14px; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+.log .hop { opacity: .6; width: 28px; }
+.log .ttlc { width: 70px; }
+.log .who { width: 64px; font-weight: 700; }
+.log .ms { width: 70px; text-align: right; }
+.log .tag { opacity: .8; }
+.log .done { border-bottom: 0; opacity: .85; }
