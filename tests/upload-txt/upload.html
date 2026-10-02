@@ -3,23 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Essai - Envoi d'un .txt</title>
+<title>Essai - Envoi d'un fichier texte</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="upload.css">
 </head>
 <body>
 <main>
-  <h1>Essai · envoyer un .txt à l'IUT</h1>
-  <p class="sub">Choisis un fichier texte sur ton ordinateur : cette page (hébergée sur GitHub) l'envoie au serveur de l'IUT, qui le range et te renvoie un reçu.</p>
+  <h1>Essai · envoyer un fichier texte à l'IUT</h1>
+  <p class="sub">Choisis un fichier <b>.txt</b> ou <b>.html</b> sur ton ordinateur : cette page (hébergée sur GitHub) l'envoie au serveur de l'IUT choisi, qui le range et te renvoie un reçu. Un .html est toujours rangé et relu comme du texte brut : il n'est jamais exécuté.</p>
 
+  <div class="dest">
+    <span class="dest-label">Destinataire</span>
+    <button type="button" class="ghost" data-url="https://web-mmi2.iutbeziers.fr/~lilian.cornet/upload.php">Mon espace</button>
+    <button type="button" class="ghost" data-url="https://web-mmi2.iutbeziers.fr/~lino.volle/upload.php">Espace de Lino</button>
+  </div>
   <label class="field">URL de upload.php (IUT)
     <input id="server" type="url" placeholder="https://…/upload.php">
   </label>
 
   <div class="dropzone" id="drop" tabindex="0" role="button" aria-label="Choisir un fichier .txt">
-    <input id="file" type="file" accept=".txt,text/plain" hidden>
-    <p class="big">Glisse un fichier .txt ici</p>
-    <p class="small">ou clique pour le choisir · .txt uniquement · 20 Ko maximum</p>
+    <input id="file" type="file" accept=".txt,.html,text/plain,text/html" hidden>
+    <p class="big">Glisse un fichier .txt ou .html ici</p>
+    <p class="small">ou clique pour le choisir · .txt ou .html · 20 Ko maximum</p>
   </div>
 
   <ol class="steps" id="steps">

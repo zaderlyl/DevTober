@@ -18,6 +18,11 @@ h2 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity:
 }
 .field input::placeholder { color: rgba(255, 255, 255, .55); }
 
+/* le choix du destinataire */
+.dest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dest-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .9; margin-right: 4px; }
+.dest button.on { background: var(--ink); color: var(--bg); }
+
 /* la div de dépôt */
 .dropzone {
   border: 2px dashed var(--ink); border-radius: 16px; padding: 38px 16px; text-align: center; cursor: pointer;

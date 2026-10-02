@@ -1,4 +1,4 @@
-const UPLOAD_URL = 'https://web-mmi2.iutbeziers.fr/~lilian.cornet/upload.php';   // valeur par défaut du champ
+const UPLOAD_URL = 'https://web-mmi2.iutbeziers.fr/~lilian.cornet/upload.php';   // valeur par défaut du champ (le bouton « Mon espace »)
 const MAX_BYTES = 20 * 1024;          // la même limite que côté serveur (qui reste seul juge)
 const TIMEOUT_MS = 8000;
 
@@ -7,6 +7,7 @@ const server = $('server'), drop = $('drop'), fileInput = $('file'), sendBtn = $
 const chosenBox = $('chosen'), chosenRows = $('chosen-rows'), preview = $('preview');
 const receiptBox = $('receipt'), receiptRows = $('receipt-rows'), list = $('list'), refresh = $('refresh');
 const steps = [...document.querySelectorAll('#steps li')];
+const destButtons = [...document.querySelectorAll('.dest button')];
 
 let file = null;        // le fichier choisi
 let localHash = null;   // son empreinte, calculée dans le navigateur
@@ -16,8 +17,14 @@ server.value = UPLOAD_URL;
 try { server.value = localStorage.getItem('devtober-upload-url') || UPLOAD_URL; } catch (e) {}
 server.addEventListener('change', () => {
   try { localStorage.setItem('devtober-upload-url', server.value.trim()); } catch (e) {}
+  markDest();
   loadList();
 });
+
+// les boutons destinataire remplissent simplement l'URL ; celui qui correspond à l'URL actuelle est mis en avant
+function markDest() { destButtons.forEach(b => b.classList.toggle('on', b.dataset.url === server.value.trim())); }
+destButtons.forEach(b => b.addEventListener('click', () => { server.value = b.dataset.url; server.dispatchEvent(new Event('change')); }));
+markDest();
 
 // ---- la frise : l'état de chaque étape (pending / active / done / error)
 function setStep(i, state, detail = '') {
@@ -86,7 +93,7 @@ async function choose(f) {
 }
 
 async function check(f) {
-  if (!/\.txt$/i.test(f.name)) return 'seuls les fichiers .txt sont acceptés';
+  if (!/\.(txt|html)$/i.test(f.name)) return 'seuls les fichiers .txt et .html sont acceptés';
   if (f.size < 1) return 'fichier vide';
   if (f.size > MAX_BYTES) return `trop gros (${fmtSize(f.size)}, max 20 Ko)`;
   const bytes = new Uint8Array(await f.arrayBuffer());
@@ -114,7 +121,9 @@ sendBtn.addEventListener('click', async () => {
     const data = await res.json().catch(() => null);
     const ms = Math.round(performance.now() - t0);
     if (!res.ok || !data || !data.ok) {
-      setStep(2, 'error', (data && data.error) || `réponse inattendue (HTTP ${res.status})`);
+      // un 404 sans réponse du script : le destinataire n'a pas (encore) déposé upload.php
+      const why = (data && data.error) || (res.status === 404 ? 'upload.php introuvable à cette adresse : le destinataire l\'a-t-il déposé ?' : `réponse inattendue (HTTP ${res.status})`);
+      setStep(2, 'error', why);
       return;
     }
     setStep(2, 'done', `reçu en ${ms} ms`);
@@ -124,6 +133,7 @@ sendBtn.addEventListener('click', async () => {
     setStep(3, same === false ? 'error' : 'done', same === null ? 'non vérifiable ici' : same ? 'empreinte identique ✓' : 'empreintes différentes ✗');
     rows(receiptRows, [
       ['rangé sous le nom', data.name],
+      ['type envoyé', data.kind === 'html' ? 'HTML : rangé comme texte brut, jamais exécuté' : 'texte'],
       ['taille reçue', fmtSize(data.bytes)],
       ['lignes', String(data.lines)],
       ['empreinte serveur', data.sha256.slice(0, 16) + '…'],

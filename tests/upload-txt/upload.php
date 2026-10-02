@@ -1,5 +1,7 @@
 <?php
-// Essai : recevoir un .txt envoyé depuis une page hébergée ailleurs (GitHub Pages).
+// Essai : recevoir un fichier texte (.txt ou .html) envoyé depuis une page hébergée ailleurs (GitHub Pages).
+// Un .html est accepté mais jamais conservé comme tel : il est rangé sous un nom .txt et relu en texte brut,
+// pour qu'il ne puisse jamais s'exécuter sur ce domaine (web-mmi2 est partagé par tous les étudiants).
 //
 //   POST upload.php             (multipart, champ "file")  -> enregistre le fichier et renvoie un reçu
 //   GET  upload.php?list=1                                 -> les derniers fichiers reçus
@@ -98,8 +100,10 @@ if (!$f || !is_array($f) || !isset($f['error'])) fail(400, 'aucun fichier reçu 
 if ($f['error'] === UPLOAD_ERR_INI_SIZE || $f['error'] === UPLOAD_ERR_FORM_SIZE) fail(400, 'fichier trop gros (max 20 Ko)');
 if ($f['error'] !== UPLOAD_ERR_OK) fail(400, 'envoi interrompu (code ' . (int) $f['error'] . ')');
 
-// le nom envoyé sert seulement à vérifier l'extension : le fichier est toujours enregistré sous un nom choisi ici
-if (!preg_match('/\.txt$/i', (string) ($f['name'] ?? ''))) fail(400, 'seuls les fichiers .txt sont acceptés');
+// le nom envoyé sert seulement à vérifier l'extension : le fichier est toujours enregistré sous un nom choisi ici,
+// et toujours en .txt, même quand c'est du HTML
+if (!preg_match('/\.(txt|html)$/i', (string) ($f['name'] ?? ''), $ext)) fail(400, 'seuls les fichiers .txt et .html sont acceptés');
+$kind = strtolower($ext[1]);
 $size = (int) ($f['size'] ?? 0);
 if ($size < 1) fail(400, 'fichier vide');
 if ($size > MAX_BYTES) fail(400, 'fichier trop gros (max 20 Ko)');
@@ -122,6 +126,7 @@ header('Content-Type: application/json; charset=utf-8');
 echo json_encode([
     'ok'      => true,
     'name'    => $name,
+    'kind'    => $kind,                    // ce qui a été envoyé ; dans tous les cas, c'est rangé comme texte brut
     'bytes'   => strlen($content),
     'lines'   => substr_count(rtrim($content, "\n"), "\n") + 1,
     'sha256'  => hash('sha256', $content),   // empreinte du contenu reçu : la page la compare à la sienne
