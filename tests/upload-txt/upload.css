@@ -1,0 +1,70 @@
+:root { --bg: #1f9d55; --ink: #fff; --line: rgba(255, 255, 255, .35); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  min-height: 100vh; background: var(--bg); color: var(--ink);
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 32px 16px 56px;
+}
+main { max-width: 760px; margin: 0 auto; }
+a { color: inherit; }
+h1 { font-size: clamp(24px, 5vw, 36px); letter-spacing: -.01em; }
+h2 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+.sub { margin: 8px 0 24px; font-size: 14px; opacity: .85; line-height: 1.5; max-width: 62ch; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 18px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
+.field input {
+  font: inherit; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0;
+  background: rgba(255, 255, 255, .14); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+}
+.field input::placeholder { color: rgba(255, 255, 255, .55); }
+
+/* la div de dépôt */
+.dropzone {
+  border: 2px dashed var(--ink); border-radius: 16px; padding: 38px 16px; text-align: center; cursor: pointer;
+  background: rgba(255, 255, 255, .06); transition: background .15s, transform .15s;
+}
+.dropzone:hover, .dropzone:focus-visible, .dropzone.over { background: rgba(255, 255, 255, .2); outline: none; }
+.dropzone.over { transform: scale(1.01); }
+.dropzone .big { font-size: clamp(18px, 4vw, 24px); font-weight: 700; }
+.dropzone .small { margin-top: 8px; font-size: 12px; opacity: .8; }
+
+/* la frise : où en est l'envoi */
+.steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 22px 0; }
+@media (max-width: 640px) { .steps { grid-template-columns: 1fr 1fr; } }
+.steps li { display: grid; grid-template-columns: 14px 1fr; column-gap: 8px; align-items: start; font-size: 12px; opacity: .45; transition: opacity .2s; }
+.steps .dot { width: 12px; height: 12px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--ink); }
+.steps .t { font-weight: 700; }
+.steps .d { grid-column: 2; margin-top: 2px; opacity: .85; word-break: break-word; }
+.steps li.active { opacity: 1; }
+.steps li.active .dot { animation: pulse 1s infinite; }
+.steps li.done { opacity: 1; }
+.steps li.done .dot { background: var(--ink); }
+.steps li.error { opacity: 1; }
+.steps li.error .dot { border-style: dashed; }
+.steps li.error .t, .steps li.error .d { text-decoration: underline wavy; }
+@keyframes pulse { 50% { transform: scale(1.5); } }
+
+.card { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: rgba(0, 0, 0, .1); }
+.card h2 { margin-bottom: 10px; }
+.kv { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
+.kv .k { flex: 0 0 120px; opacity: .65; }
+.kv .v { word-break: break-all; }
+.kv .v.good { background: var(--ink); color: var(--bg); padding: 0 6px; border-radius: 4px; }
+.kv .v.bad { text-decoration: underline wavy; }
+pre { margin: 12px 0; padding: 10px 12px; max-height: 170px; overflow: auto; font: inherit; font-size: 12px; line-height: 1.6; background: rgba(0, 0, 0, .18); border-radius: 8px; white-space: pre-wrap; word-break: break-word; }
+[hidden] { display: none !important; }
+
+button { font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 9px 18px; }
+button:disabled { opacity: .5; cursor: default; }
+button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 5px 12px; font-size: 12px; }
+
+.inbox { margin-top: 34px; }
+.inbox-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+#list { list-style: none; font-size: 13px; }
+#list li { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, .18); }
+#list li.new { animation: slide .4s ease-out; }
+@keyframes slide { from { opacity: 0; transform: translateY(-6px); } }
+#list .name { font-weight: 700; }
+#list .meta { opacity: .65; }
+#list .prev { flex: 1 1 100%; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#list .empty { opacity: .6; border-bottom: 0; }

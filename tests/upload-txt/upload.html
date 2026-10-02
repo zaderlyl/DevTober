@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Essai - Envoi d'un .txt</title>
+<link rel="stylesheet" href="upload.css">
+</head>
+<body>
+<main>
+  <h1>Essai · envoyer un .txt à l'IUT</h1>
+  <p class="sub">Choisis un fichier texte sur ton ordinateur : cette page (hébergée sur GitHub) l'envoie au serveur de l'IUT, qui le range et te renvoie un reçu.</p>
+
+  <label class="field">URL de upload.php (IUT)
+    <input id="server" type="url" placeholder="https://…/upload.php">
+  </label>
+
+  <div class="dropzone" id="drop" tabindex="0" role="button" aria-label="Choisir un fichier .txt">
+    <input id="file" type="file" accept=".txt,text/plain" hidden>
+    <p class="big">Glisse un fichier .txt ici</p>
+    <p class="small">ou clique pour le choisir · .txt uniquement · 20 Ko maximum</p>
+  </div>
+
+  <ol class="steps" id="steps">
+    <li data-step="0"><span class="dot"></span><span class="t">Fichier choisi</span><span class="d"></span></li>
+    <li data-step="1"><span class="dot"></span><span class="t">Vérifié ici</span><span class="d"></span></li>
+    <li data-step="2"><span class="dot"></span><span class="t">Envoyé à l'IUT</span><span class="d"></span></li>
+    <li data-step="3"><span class="dot"></span><span class="t">Reçu et identique</span><span class="d"></span></li>
+  </ol>
+
+  <section class="card" id="chosen" hidden>
+    <h2>Fichier</h2>
+    <div id="chosen-rows"></div>
+    <pre id="preview"></pre>
+    <button id="send">Envoyer à l'IUT</button>
+  </section>
+
+  <section class="card" id="receipt" hidden>
+    <h2>Reçu du serveur IUT</h2>
+    <div id="receipt-rows"></div>
+  </section>
+
+  <section class="inbox">
+    <div class="inbox-head">
+      <h2>Fichiers reçus par l'IUT</h2>
+      <button id="refresh" class="ghost">Actualiser</button>
+    </div>
+    <ul id="list"><li class="empty">Aucun fichier pour l'instant.</li></ul>
+  </section>
+</main>
+<script src="upload.js"></script>
+</body>
+</html>

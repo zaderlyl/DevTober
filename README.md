@@ -70,6 +70,8 @@ DevTober/
 │   ├── inbox/            (page de réception servie par ping.php)
 │   ├── pong.json
 │   └── README.md
+├── tests/            (essais hors DevTober)
+│   └── upload-txt/   (envoyer un .txt de son ordinateur vers le serveur de l'IUT)
 └── ...
 ```
 
