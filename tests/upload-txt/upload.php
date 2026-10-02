@@ -1,7 +1,6 @@
 <?php
-// Essai : recevoir un fichier texte (.txt ou .html) envoyé depuis une page hébergée ailleurs (GitHub Pages).
-// Un .html est accepté mais jamais conservé comme tel : il est rangé sous un nom .txt et relu en texte brut,
-// pour qu'il ne puisse jamais s'exécuter sur ce domaine (web-mmi2 est partagé par tous les étudiants).
+// Essai : recevoir un .txt envoyé depuis une page hébergée ailleurs (GitHub Pages).
+// Chaque fichier est rangé sous le nom « pseudo GitHub de l'expéditeur + heure et date », ex. zaderlyl_15h42.02.10.2026.txt
 //
 //   POST upload.php             (multipart, champ "file")  -> enregistre le fichier et renvoie un reçu
 //   GET  upload.php?list=1                                 -> les derniers fichiers reçus
@@ -13,11 +12,13 @@ const MAX_BYTES  = 20480;                  // 20 Ko
 const KEEP_FILES = 50;                     // les plus anciens sont supprimés au-delà
 const RATE_MAX   = 10;                     // envois par minute et par visiteur
 const DIR        = __DIR__ . '/uploads';
-// le seul format de nom que ce script crée et accepte de lire : date-heure-hasard, puis (facultatif) le nom d'origine nettoyé, et toujours .txt à la fin
-// ex. 20261002-154317-d9ae8adb-test.html.txt : les seuls caractères permis sont a-z 0-9 _ - et un point, jamais de / ni de ..
-const NAME_RE    = '/^\d{8}-\d{6}-[a-f0-9]{8}(?:-[a-z0-9_-]{1,30}\.(?:txt|html))?\.txt$/';
+// les seuls formats de nom que ce script crée et accepte de lire (aucun chemin, aucun « .. » possible) :
+//   zaderlyl_15h42.02.10.2026.txt   (pseudo, heure, date ; « -2 » si deux envois dans la même minute)
+//   20261002-154317-d9ae8adb.txt    (ancien format, pour que les anciens fichiers restent lisibles)
+const NAME_RE    = '/^(?:[a-z0-9-]{1,39}_\d{2}h\d{2}\.\d{2}\.\d{2}\.\d{4}(?:-\d{1,2})?|\d{8}-\d{6}-[a-f0-9]{8}(?:-[a-z0-9_-]{1,30}\.(?:txt|html))?)\.txt$/';
 const GUARD      = "<?php http_response_code(404); exit; ?>\n";
 
+date_default_timezone_set('Europe/Paris');
 header('Access-Control-Allow-Origin: *');  // la page est sur une autre origine : elle doit pouvoir lire la réponse
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
@@ -29,23 +30,24 @@ function fail(int $code, string $msg) {
     exit;
 }
 
+// les fichiers reçus, du plus récent au plus ancien (le nom ne contient plus la date en premier : on trie sur la date du fichier)
+function received_files(): array {
+    $files = array_values(array_filter(is_dir(DIR) ? scandir(DIR) : [], fn($x) => preg_match(NAME_RE, $x)));
+    usort($files, fn($a, $b) => filemtime(DIR . '/' . $b) <=> filemtime(DIR . '/' . $a) ?: strcmp($b, $a));
+    return $files;
+}
+
+// le pseudo GitHub se déduit de la page d'où vient l'envoi : https://PSEUDO.github.io -> PSEUDO (en local : « local »)
+function pseudo_from_origin(?string $origin): string {
+    $host = strtolower((string) parse_url((string) $origin, PHP_URL_HOST));
+    return preg_match('/^([a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?)\.github\.io$/', $host, $m) ? $m[1] : 'local';
+}
+
 function origin_allowed(?string $origin): bool {
     if ($origin === null) return false;
     if (in_array($origin, ALLOWED_ORIGINS, true)) return true;
     $host = parse_url($origin, PHP_URL_HOST);
     return $host === 'localhost' || $host === '127.0.0.1';
-}
-
-// ---- 0. voir un fichier reçu comme une page (?view=NOM) : le HTML s'affiche avec son style, mais enfermé
-// dans un « sandbox » : aucun script, aucun formulaire, origine opaque (pas d'accès au domaine web-mmi2 ni à ses cookies)
-if (isset($_GET['view'])) {
-    $name = (string) $_GET['view'];
-    if (!preg_match(NAME_RE, $name) || !is_file(DIR . '/' . $name)) fail(404, 'fichier introuvable');
-    header('Content-Type: text/html; charset=utf-8');
-    header("Content-Security-Policy: sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:");
-    header('Referrer-Policy: no-referrer');
-    readfile(DIR . '/' . $name);
-    exit;
 }
 
 // ---- 1. lire un fichier reçu : toujours en texte brut, jamais interprété
@@ -63,8 +65,7 @@ if (isset($_GET['file'])) {
 if (isset($_GET['list'])) {
     header('Content-Type: application/json; charset=utf-8');
     $out = [];
-    foreach (is_dir(DIR) ? scandir(DIR, SCANDIR_SORT_DESCENDING) : [] as $f) {
-        if (!preg_match(NAME_RE, $f)) continue;
+    foreach (received_files() as $f) {
         $content = (string) file_get_contents(DIR . '/' . $f, false, null, 0, 400);
         $out[] = ['name' => $f, 'size' => filesize(DIR . '/' . $f), 'time' => filemtime(DIR . '/' . $f) * 1000,
                   'preview' => mb_substr(trim($content), 0, 120)];
@@ -114,10 +115,8 @@ if (!$f || !is_array($f) || !isset($f['error'])) fail(400, 'aucun fichier reçu 
 if ($f['error'] === UPLOAD_ERR_INI_SIZE || $f['error'] === UPLOAD_ERR_FORM_SIZE) fail(400, 'fichier trop gros (max 20 Ko)');
 if ($f['error'] !== UPLOAD_ERR_OK) fail(400, 'envoi interrompu (code ' . (int) $f['error'] . ')');
 
-// le nom envoyé sert seulement à vérifier l'extension : le fichier est toujours enregistré sous un nom choisi ici,
-// et toujours en .txt, même quand c'est du HTML
-if (!preg_match('/\.(txt|html)$/i', (string) ($f['name'] ?? ''), $ext)) fail(400, 'seuls les fichiers .txt et .html sont acceptés');
-$kind = strtolower($ext[1]);
+// le nom envoyé sert seulement à vérifier l'extension : le fichier est toujours enregistré sous un nom choisi ici
+if (!preg_match('/\.txt$/i', (string) ($f['name'] ?? ''))) fail(400, 'seuls les fichiers .txt sont acceptés');
 $size = (int) ($f['size'] ?? 0);
 if ($size < 1) fail(400, 'fichier vide');
 if ($size > MAX_BYTES) fail(400, 'fichier trop gros (max 20 Ko)');
@@ -127,23 +126,20 @@ if (strlen($content) < 1 || strlen($content) > MAX_BYTES) fail(400, 'taille inva
 // du vrai texte : pas d'octet nul (signe d'un fichier binaire) et de l'UTF-8 valide
 if (strpos($content, "\0") !== false || !mb_check_encoding($content, 'UTF-8')) fail(400, 'ce fichier n\'est pas du texte UTF-8');
 
-// le nom d'origine est gardé pour qu'on s'y retrouve, mais nettoyé (a-z 0-9 _ -) et suivi de .txt : il reste du texte brut
-$base = trim((string) preg_replace('/[^a-z0-9_-]+/', '-', strtolower(pathinfo((string) $f['name'], PATHINFO_FILENAME))), '-');
-$base = substr($base, 0, 30);
-$name = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . ($base !== '' ? '-' . $base . '.' . $kind : '') . '.txt';
+// nom = pseudo GitHub + heure + date, ex. zaderlyl_15h42.02.10.2026.txt (le « : » de 15:42 est remplacé par « h » : il est interdit dans les noms de fichiers)
+$stem = pseudo_from_origin($origin) . '_' . date('H\hi.d.m.Y');
+$name = $stem . '.txt';
+for ($i = 2; is_file(DIR . '/' . $name) && $i < 100; $i++) $name = $stem . '-' . $i . '.txt';   // deux envois dans la même minute : -2, -3…
 if (file_put_contents(DIR . '/' . $name, $content, LOCK_EX) === false) fail(500, 'écriture impossible');
 
 // on garde les KEEP_FILES derniers fichiers
-$files = array_values(array_filter(scandir(DIR), fn($x) => preg_match(NAME_RE, $x)));
-sort($files);
-foreach (array_slice($files, 0, max(0, count($files) - KEEP_FILES)) as $old) @unlink(DIR . '/' . $old);
+foreach (array_slice(received_files(), KEEP_FILES) as $old) @unlink(DIR . '/' . $old);
 
 http_response_code(201);
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode([
     'ok'      => true,
     'name'    => $name,
-    'kind'    => $kind,                    // ce qui a été envoyé ; dans tous les cas, c'est rangé comme texte brut
     'bytes'   => strlen($content),
     'lines'   => substr_count(rtrim($content, "\n"), "\n") + 1,
     'sha256'  => hash('sha256', $content),   // empreinte du contenu reçu : la page la compare à la sienne

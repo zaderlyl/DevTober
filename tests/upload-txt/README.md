@@ -1,6 +1,6 @@
-# Essai - envoyer un fichier texte vers l'IUT
+# Essai - envoyer un .txt vers l'IUT
 
-Une page hébergée sur GitHub Pages envoie un fichier `.txt` ou `.html`, choisi sur l'ordinateur de la personne, vers un serveur PHP de l'IUT (web-mmi). Le serveur le range et renvoie un reçu ; la page vérifie que le fichier reçu est strictement identique à l'original.
+Une page hébergée sur GitHub Pages envoie un fichier `.txt`, choisi sur l'ordinateur de la personne, vers un serveur PHP de l'IUT (web-mmi). Le serveur le range et renvoie un reçu ; la page vérifie que le fichier reçu est strictement identique à l'original.
 
 > Ce n'est pas un jour du DevTober : c'est un essai à part.
 
@@ -11,21 +11,14 @@ Une page hébergée sur GitHub Pages envoie un fichier `.txt` ou `.html`, choisi
                                           └────── reçu : nom, taille, SHA-256 ◀──┘
 ```
 1. **Choisir** : une div de dépôt (clic, clavier ou glisser-déposer).
-2. **Vérifier ici** : extension `.txt` ou `.html`, taille, vrai texte UTF-8, avec un aperçu des premières lignes.
+2. **Vérifier ici** : extension `.txt`, taille, vrai texte UTF-8, avec un aperçu des premières lignes.
 3. **Envoyer** : `fetch` avec un `FormData`. C'est une requête CORS « simple » (multipart), donc sans pré-requête.
 4. **Reçu et identique** : la page calcule le SHA-256 du fichier (Web Crypto) et le compare à celui calculé par le serveur sur ce qu'il a reçu.
 
 Une liste en bas montre les fichiers rangés sur le serveur (clic = le contenu en texte brut).
 
-## Choisir le destinataire
-Deux boutons remplissent l'URL de `upload.php` : **Mon espace** et **Espace de Lino**. On peut aussi coller n'importe quelle URL. `test.html` est un fichier d'exemple à envoyer pour essayer.
-
-### Envoyer vers l'espace de quelqu'un d'autre
-Un envoi ne peut réussir que si **le destinataire a déposé `upload.php` sur son propre espace** : on ne peut pas écrire sur le serveur de quelqu'un d'autre sans son accord, et la page ne contourne rien. Tant que ce n'est pas fait, la page l'indique : *« upload.php introuvable à cette adresse : le destinataire l'a-t-il déposé ? »*.
-
-Pour recevoir des fichiers, le destinataire :
-1. dépose `upload.php` sur son espace web (dossier accessible en écriture : le script crée `uploads/` tout seul) ;
-2. n'a rien d'autre à régler : la liste `ALLOWED_ORIGINS` du script contient déjà la page GitHub Pages de DevTober (`https://zaderlyl.github.io`) ainsi que `localhost`. Pour accepter les envois d'une autre page, il ajoute son adresse dans cette liste, en haut du fichier.
+## Nom des fichiers reçus
+Chaque fichier est rangé dans `uploads/` sous le nom **pseudo GitHub + heure + date** : `zaderlyl_15h42.02.10.2026.txt` (15 h 42, le 2 octobre 2026, heure de Paris). Le pseudo est déduit de la page d'où part l'envoi (`https://zaderlyl.github.io` donne `zaderlyl` ; en essai local, `local`). Le « : » de 15:42 est remplacé par « h », car il est interdit dans les noms de fichiers. Deux envois dans la même minute donnent `…-2.txt`, `…-3.txt`. Le nom envoyé par la page n'est jamais utilisé.
 
 ## Installation
 - **GitHub :** pousser le repo (la page est servie par GitHub Pages).
@@ -37,10 +30,8 @@ Un endpoint public qui reçoit des fichiers est une cible classique, donc le ser
 
 | Risque | Réponse |
 |---|---|
-| Envoyer un script (`.php`, `.txt.php`, `.html.php`, `.svg`, `.htm`…) | seules les extensions `.txt` et `.html` sont acceptées (le nom doit **finir** par l'une des deux), **et le nom envoyé n'est jamais utilisé** : le fichier est toujours rangé sous un nom généré (`AAAAMMJJ-HHMMSS-8hex-test.html.txt` : le nom d'origine est gardé pour s'y retrouver, mais nettoyé (a-z 0-9 _ -, 30 caractères max) et toujours suivi de `.txt`) |
-| Un fichier `.html` envoyé (donc potentiellement un script) | accepté mais **jamais conservé comme HTML** : il est rangé sous un nom `.txt` et relu en `text/plain` avec `nosniff` et une CSP `default-src 'none'`. Il ne peut pas s'exécuter, ce qui compte car `web-mmi2` est un seul domaine partagé par tous les étudiants (un HTML stocké tel quel s'exécuterait sur le même domaine que les espaces des autres) |
-| Voir un `.html` reçu comme une page (`upload.php?view=NOM`) | la page s'affiche avec son style mais sous `Content-Security-Policy: sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:` : **aucun script ne s'exécute**, origine opaque (pas d'accès aux cookies ni aux autres espaces de `web-mmi2`), pas d'image ni de ressource externe. Testé avec un HTML contenant `<script>` et `onerror` : bloqué par le navigateur |
-| Un faux `.txt` ou `.html` (image, binaire) | contenu vérifié : pas d'octet nul, UTF-8 valide |
+| Envoyer un script (`.php`, `.txt.php`, `.html`, `.svg`…) | seule l'extension `.txt` est acceptée (le nom doit **finir** par `.txt`), **et le nom envoyé n'est jamais utilisé** : le fichier est toujours rangé sous un nom généré (`pseudo_HHhMM.JJ.MM.AAAA.txt`) |
+| Un faux `.txt` (image, binaire) | contenu vérifié : pas d'octet nul, UTF-8 valide |
 | Contenu piégé dans un vrai `.txt` (`<?php`, `<script>`) | rangé en `.txt`, relu **en `text/plain`** avec `nosniff` et `Content-Security-Policy: default-src 'none'` : jamais exécuté ni interprété |
 | Lire un autre fichier du serveur (`?file=../upload.php`) | `?file=` n'accepte que le format de nom généré par le script : tout le reste donne 404 |
 | Envois depuis un autre site | l'en-tête `Origin` doit être la page DevTober (ou `localhost`) ; la vérification est stricte (`github.io.evil.com` est refusé) |
