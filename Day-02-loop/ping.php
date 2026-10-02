@@ -170,4 +170,6 @@ if (!is_readable($page)) {
     echo 'Dossier inbox/ manquant à côté de ping.php.';
     exit;
 }
-readfile($page);
+// la page est servie à l'URL de ping.php : on lui dit que ses liens relatifs partent du dossier inbox/
+// (ouverte directement à inbox/inbox.html, elle n'a pas besoin de cette ligne : la base est la même)
+echo preg_replace('/<head>/', "<head>\n<base href=\"inbox/\">", (string) file_get_contents($page), 1);

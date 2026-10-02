@@ -43,7 +43,7 @@ GitHub, lui, ne peut rien écrire (c'est un fichier statique) : le message y est
   ├── inbox.css
   └── inbox.js
   ```
-  La page de réception est servie par `ping.php` : on l'ouvre avec l'URL de `ping.php`, pas en ouvrant `inbox/inbox.html` directement (ses liens sont relatifs à `ping.php`). Sans le dossier `inbox/`, `ping.php` l'indique clairement. Son URL (en `https://`) est pré-remplie dans le champ de la page, et on peut la remplacer par la sienne : elle est retenue d'une visite à l'autre (`localStorage`).
+  La page de réception s'ouvre aussi bien à l'URL de `ping.php` (qui lui ajoute une balise `<base>` vers `inbox/`) qu'en ouvrant `inbox/inbox.html` directement : ses liens sont relatifs à son propre dossier et son JS appelle `../ping.php`. Sans le dossier `inbox/`, `ping.php` l'indique clairement. Son URL (en `https://`) est pré-remplie dans le champ de la page, et on peut la remplacer par la sienne : elle est retenue d'une visite à l'autre (`localStorage`).
 
 Le dossier de `ping.php` doit être **accessible en écriture** pour PHP : le script crée lui-même `loop-data.php` au premier message. Si la page indique « écriture impossible sur le serveur », créer ce fichier vide à la main et lui donner les droits d'écriture (`chmod 666`).
 

@@ -1,0 +1,4 @@
+Bonjour l'IUT !
+
+Ceci est un fichier d'essai envoyé depuis la page DevTober.
+Accents : é è à ç ù — et un peu de ponctuation : « ok » ; (1, 2, 3).

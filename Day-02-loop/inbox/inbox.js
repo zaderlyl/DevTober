@@ -1,6 +1,7 @@
 const big = document.getElementById('big'), list = document.getElementById('list');
 const dot = document.getElementById('dot'), status = document.getElementById('status');
 let seq = 0, first = true;
+const PING = '../ping.php';   // vu depuis le dossier inbox/ (la page est servie avec <base href="inbox/"> par ping.php)
 
 // tout passe par textContent : un message, même piégé, n'est jamais interprété comme du HTML
 function el(tag, cls, text) {
@@ -29,7 +30,7 @@ function show(e, animate) {
 
 async function poll() {
   try {
-    const res = await fetch('?live=1&since=' + seq, { cache: 'no-store' });
+    const res = await fetch(PING + '?live=1&since=' + seq, { cache: 'no-store' });
     const data = await res.json();
     for (const e of data.entries) show(e, !first);
     seq = data.seq;
