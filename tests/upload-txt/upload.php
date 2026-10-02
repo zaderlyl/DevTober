@@ -34,6 +34,18 @@ function origin_allowed(?string $origin): bool {
     return $host === 'localhost' || $host === '127.0.0.1';
 }
 
+// ---- 0. voir un fichier reçu comme une page (?view=NOM) : le HTML s'affiche avec son style, mais enfermé
+// dans un « sandbox » : aucun script, aucun formulaire, origine opaque (pas d'accès au domaine web-mmi2 ni à ses cookies)
+if (isset($_GET['view'])) {
+    $name = (string) $_GET['view'];
+    if (!preg_match(NAME_RE, $name) || !is_file(DIR . '/' . $name)) fail(404, 'fichier introuvable');
+    header('Content-Type: text/html; charset=utf-8');
+    header("Content-Security-Policy: sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:");
+    header('Referrer-Policy: no-referrer');
+    readfile(DIR . '/' . $name);
+    exit;
+}
+
 // ---- 1. lire un fichier reçu : toujours en texte brut, jamais interprété
 if (isset($_GET['file'])) {
     $name = (string) $_GET['file'];

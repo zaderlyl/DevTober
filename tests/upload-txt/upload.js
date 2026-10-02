@@ -175,6 +175,13 @@ async function loadList(highlight) {
       const prev = document.createElement('span');
       prev.className = 'prev'; prev.textContent = f.preview;
       li.append(a, meta, prev);
+      // un fichier qui commence comme du HTML peut aussi s'ouvrir comme une page (sans script, voir ?view= dans upload.php)
+      if (/^\s*<(!doctype html|html)/i.test(f.preview)) {
+        const v = document.createElement('a');
+        v.className = 'name'; v.textContent = 'Voir comme page ↗'; v.target = '_blank'; v.rel = 'noopener';
+        v.href = url + (url.includes('?') ? '&' : '?') + 'view=' + encodeURIComponent(f.name);
+        li.append(v);
+      }
       list.appendChild(li);
     }
   } catch (e) {
