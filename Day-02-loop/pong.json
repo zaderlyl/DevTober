@@ -1,0 +1,4 @@
+{
+  "server": "github",
+  "note": "Fichier statique servi par GitHub Pages. Il ne peut pas décrémenter le TTL lui-même : c'est le navigateur qui le fait."
+}

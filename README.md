@@ -13,7 +13,7 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 | Jour | Mot | Projet |
 |---|---|---|
 | 01 | Pulse | [Day-01-pulse](Day-01-pulse) |
-| 02 | Loop | |
+| 02 | Loop | [Day-02-loop](Day-02-loop) |
 | 03 | Bloom | |
 | 04 | Drift | |
 | 05 | Chaos | |
