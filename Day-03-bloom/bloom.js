@@ -1,5 +1,5 @@
-// Lit l'état de la plante sur le serveur de l'IUT (bloom.php?state=1) et la dessine. Rien n'est écrit d'ici.
-const BLOOM_URL = 'https://web-mmi2.iutbeziers.fr/~lilian.cornet/bloom.php';   // valeur par défaut du champ
+// Lit l'état de la plante sur le Worker Cloudflare (?state=1) et la dessine. Rien n'est écrit d'ici.
+const BLOOM_URL = 'https://devtober-bloom.devtober-lilian.workers.dev';   // valeur par défaut du champ (le Worker déployé)
 const POLL_MS = 2000;
 
 const $ = id => document.getElementById(id);
@@ -58,7 +58,7 @@ function show(st) {
 
 async function poll() {
   const url = server.value.trim();
-  if (!url) { statusEl.className = 'status bad'; statusEl.textContent = 'Indique l\'URL du bloom.php.'; return; }
+  if (!url) { statusEl.className = 'status bad'; statusEl.textContent = 'Indique l\'URL du Worker (voir le README).'; return; }
   try {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
     const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'state=1', { cache: 'no-store', signal: ctl.signal });
@@ -68,7 +68,7 @@ async function poll() {
     show(st);
   } catch (e) {
     statusEl.className = 'status bad';
-    statusEl.textContent = 'Plante injoignable (bloom.php déposé sur l\'IUT ? URL en https ?)';
+    statusEl.textContent = 'Plante injoignable (Worker déployé ? URL en https ?)';
   }
 }
 

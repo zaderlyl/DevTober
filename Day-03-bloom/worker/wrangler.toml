@@ -1,0 +1,8 @@
+name = "devtober-bloom"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# le stockage de l'état de la plante ; l'identifiant s'obtient avec :  npx wrangler kv namespace create BLOOM
+[[kv_namespaces]]
+binding = "BLOOM"
+id = "1248447918a8453ca8edf000dfb9e2df"
