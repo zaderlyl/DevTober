@@ -2,7 +2,7 @@
 const DAYS = [
   { word: 'Pulse', path: 'Day-01-pulse/pulse.html' },
   { word: 'Loop', path: 'Day-02-loop/loop.html' },
-  { word: 'Bloom' },
+  { word: 'Bloom', path: 'Day-03-bloom/bloom.html' },
   { word: 'Drift' },
   { word: 'Chaos' },
   { word: 'Tiny' },

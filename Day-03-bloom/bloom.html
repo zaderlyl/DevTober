@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 03 - Bloom</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="bloom.css">
+</head>
+<body>
+<main>
+  <h1>Day 03 / Bloom</h1>
+  <p class="sub">Une plante qui pousse grâce à un bot Discord : chaque <b>/arroser</b> la fait passer à l'étape suivante. Cette page la montre en direct.</p>
+
+  <div class="plant" id="plant" aria-label="La plante">
+    <svg viewBox="0 0 200 260" role="img" aria-labelledby="plant-title">
+      <title id="plant-title">La plante</title>
+      <ellipse class="soil" cx="100" cy="226" rx="78" ry="16"/>
+      <g class="drops" id="drops">
+        <path d="M70 20 q-5 9 0 12 q5 -3 0 -12z"/><path d="M100 4 q-5 9 0 12 q5 -3 0 -12z"/><path d="M130 24 q-5 9 0 12 q5 -3 0 -12z"/>
+      </g>
+      <ellipse class="seed" id="seed" cx="100" cy="216" rx="9" ry="6"/>
+      <rect class="stem" id="stem" x="97" y="70" width="6" height="150" rx="3"/>
+      <g class="leaf" id="leaf-l"><ellipse cx="82" cy="0" rx="20" ry="9" transform="rotate(-25 82 0)"/></g>
+      <g class="leaf" id="leaf-r"><ellipse cx="118" cy="0" rx="20" ry="9" transform="rotate(25 118 0)"/></g>
+      <g class="head" id="head">
+        <g class="bud" id="bud"><ellipse cx="100" cy="-12" rx="11" ry="17"/></g>
+        <g class="flower" id="flower">
+          <g class="petals">
+            <ellipse cx="100" cy="-34" rx="11" ry="20"/>
+            <ellipse cx="100" cy="-34" rx="11" ry="20" transform="rotate(60 100 0)"/>
+            <ellipse cx="100" cy="-34" rx="11" ry="20" transform="rotate(120 100 0)"/>
+            <ellipse cx="100" cy="-34" rx="11" ry="20" transform="rotate(180 100 0)"/>
+            <ellipse cx="100" cy="-34" rx="11" ry="20" transform="rotate(240 100 0)"/>
+            <ellipse cx="100" cy="-34" rx="11" ry="20" transform="rotate(300 100 0)"/>
+          </g>
+          <circle class="core" cx="100" cy="0" r="12"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <p class="status" id="status" role="status">Connexion à la plante…</p>
+  <ol class="steps" id="steps"></ol>
+
+  <label class="field">URL du bloom.php (IUT)
+    <input id="server" type="url" placeholder="https://…/bloom.php">
+  </label>
+  <p class="note">Pour arroser, écris <b>/arroser</b> dans ton serveur Discord. Cette page ne fait que lire l'état : elle ne peut pas arroser.</p>
+</main>
+<script src="bloom.js"></script>
+</body>
+</html>
