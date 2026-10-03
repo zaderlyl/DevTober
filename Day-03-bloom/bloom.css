@@ -9,6 +9,12 @@ main { max-width: 640px; margin: 0 auto; }
 h1 { font-size: clamp(28px, 6vw, 44px); letter-spacing: -.01em; }
 .sub { margin-top: 8px; font-size: 14px; opacity: .85; line-height: 1.5; max-width: 60ch; }
 
+.cta { margin-top: 20px; }
+.btn {
+  display: inline-block; font-weight: 700; font-size: 14px; text-decoration: none;
+  background: var(--ink); color: var(--bg); border-radius: 8px; padding: 10px 18px;
+}
+.btn:hover, .btn:focus-visible { outline: 3px solid rgba(255,255,255,.5); outline-offset: 2px; }
 .plant { margin: 24px auto 8px; width: min(320px, 80vw); }
 .plant svg { width: 100%; height: auto; overflow: visible; }
 .soil { fill: var(--soil); }

@@ -1,7 +1,9 @@
 <?php
 // À lancer UNE fois depuis ton ordinateur (pas sur l'IUT) pour dire à Discord quelles commandes existent :
 //
-//   DISCORD_TOKEN='ton-token' DISCORD_GUILD_ID='id-du-serveur' php register-commands.php
+//   DISCORD_TOKEN='ton-token' php register-commands.php                                  (commandes GLOBALES : tous les serveurs qui ajoutent le bot)
+//   DISCORD_TOKEN='ton-token' DISCORD_GUILD_ID='id-du-serveur' php register-commands.php   (commandes d'UN serveur, visibles tout de suite : pour tester)
+//   DISCORD_TOKEN='ton-token' DISCORD_GUILD_ID='id-du-serveur' DISCORD_CLEAR=1 php register-commands.php   (retire les commandes de ce serveur)
 //
 // Le token du bot n'est lu que dans la variable d'environnement : il n'est écrit dans aucun fichier.
 // Avec DISCORD_GUILD_ID, les commandes apparaissent tout de suite sur ce serveur (idéal pour tester) ;
@@ -17,8 +19,10 @@ if ($guild !== false && $guild !== '' && !ctype_digit($guild)) { fwrite(STDERR, 
 $commands = [
     ['name' => 'arroser', 'type' => 1, 'description' => 'Arroser la plante : elle passe à l\'étape suivante'],
     ['name' => 'plante',  'type' => 1, 'description' => 'Voir où en est la plante'],
-    ['name' => 'graine',  'type' => 1, 'description' => 'Replanter une graine (la plante repart de zéro)'],
+    ['name' => 'graine',  'type' => 1, 'description' => 'Replanter une graine (seulement quand la plante a fleuri)'],
 ];
+if (getenv('DISCORD_CLEAR') && !$guild) { fwrite(STDERR, "DISCORD_CLEAR demande aussi DISCORD_GUILD_ID.\n"); exit(1); }
+if (getenv('DISCORD_CLEAR')) $commands = [];
 
 $url = 'https://discord.com/api/v10/applications/' . APPLICATION_ID . ($guild ? '/guilds/' . $guild : '') . '/commands';
 $ctx = stream_context_create(['http' => [
@@ -33,7 +37,7 @@ $code = (int) (preg_match('#HTTP/\S+ (\d+)#', $http_response_header[0] ?? '', $m
 if ($res === false || $code === 0) { fwrite(STDERR, "Discord injoignable.\n"); exit(1); }
 
 if ($code === 200) {
-    echo 'OK : ' . count(json_decode($res, true)) . ' commandes enregistrées (' . ($guild ? "serveur $guild" : 'globales') . ")\n";
+    echo 'OK : ' . count(json_decode($res, true)) . ' commandes enregistrées (' . ($guild ? "serveur $guild" : 'globales, pour tous les serveurs') . ")\n";
     foreach (json_decode($res, true) as $c) echo '  /' . $c['name'] . "\n";
     exit(0);
 }

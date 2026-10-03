@@ -12,6 +12,8 @@
   <h1>Day 03 / Bloom</h1>
   <p class="sub">Une plante qui pousse grâce à un bot Discord : chaque <b>/arroser</b> la fait passer à l'étape suivante. Cette page la montre en direct.</p>
 
+  <p class="cta"><a class="btn" id="invite" href="https://discord.com/oauth2/authorize?client_id=1555882289844461639&amp;scope=applications.commands" target="_blank" rel="noopener">Ajouter le bot à ton serveur Discord ↗</a></p>
+
   <div class="plant" id="plant" aria-label="La plante">
     <svg viewBox="0 0 200 260" role="img" aria-labelledby="plant-title">
       <title id="plant-title">La plante</title>
@@ -46,7 +48,7 @@
   <label class="field">URL du Worker (Cloudflare)
     <input id="server" type="url" placeholder="https://devtober-bloom.….workers.dev">
   </label>
-  <p class="note">Pour arroser, écris <b>/arroser</b> dans ton serveur Discord. Cette page ne fait que lire l'état : elle ne peut pas arroser.</p>
+  <p class="note">Pour arroser, écris <b>/arroser</b> dans un serveur où le bot est ajouté. <b>La plante est la même pour tous les serveurs</b> : chaque arrosage, d'où qu'il vienne, la fait grandir pour tout le monde. Cette page ne fait que lire l'état : elle ne peut pas arroser.</p>
 </main>
 <script src="bloom.js"></script>
 </body>

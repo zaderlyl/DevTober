@@ -1,13 +1,14 @@
 // Day 03 - Bloom : le « bot » Discord, version Cloudflare Workers.
 // Pas de programme qui tourne en permanence : Discord appelle ce Worker (Interactions Endpoint URL) à chaque
 // commande /arroser, /plante ou /graine, et affiche ce qu'il répond.
-// L'état de la plante vit dans un Durable Object : un objet unique pour le monde entier, qui traite les accès
-// au stockage l'un après l'autre. Pas de copie périmée (contrairement à KV), et deux arrosages simultanés comptent tous les deux.
+// Une SEULE plante pour tous les serveurs qui ont ajouté le bot : l'état vit dans un Durable Object unique, qui traite
+// les accès au stockage l'un après l'autre. Pas de copie périmée (contrairement à KV), et deux arrosages simultanés comptent tous les deux.
 //
 //   POST /            Discord -> une commande ; la signature Ed25519 est vérifiée avant toute chose
 //   GET  /?state=1    l'état de la plante en JSON (lu par la page bloom.html)
 
 const PUBLIC_KEY = 'ab4636713fd09b3b530cc509f174d47d60d954000c8ba1051f2271f3068116ec';  // clé PUBLIQUE de l'application Discord (pas un secret)
+const PAGE = 'https://zaderlyl.github.io/DevTober/Day-03-bloom/bloom.html';   // la page qui montre la plante
 const PER_STAGE = 1;   // arrosages nécessaires pour passer à l'étape suivante (1 pour le test)
 const STAGES = [
   { emoji: '🌰', name: 'Graine' },
@@ -19,6 +20,7 @@ const STAGES = [
 const LAST = STAGES.length - 1;
 const FRESH = { stage: 0, progress: 0, waterings: 0, lastAt: 0 };
 const MAX_BODY = 20000;
+const KEY = 'main';   // le nom du Durable Object : un seul, donc une seule plante
 
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers } });
@@ -71,7 +73,7 @@ export class Plant {
   }
 }
 async function plant(env, action) {
-  const stub = env.PLANT.get(env.PLANT.idFromName('main'));
+  const stub = env.PLANT.get(env.PLANT.idFromName(KEY));
   return (await (await stub.fetch('https://plant/', { method: 'POST', body: JSON.stringify({ action }) })).json());
 }
 
@@ -107,6 +109,7 @@ export default {
     if (msg.type !== 2) return json({ ok: false, error: 'interaction non gérée' }, 400);
 
     const cmd = String(msg.data?.name || '');
+    const link = `<${PAGE}>`;   // les < > évitent l'aperçu encombrant dans Discord
 
     if (cmd === 'arroser') {
       const { s, done } = await plant(env, 'water');
@@ -115,9 +118,12 @@ export default {
     }
     if (cmd === 'plante') {
       const { s } = await plant(env, 'plant');
-      return reply(statusLine(s) + `\n${s.waterings} arrosage${s.waterings > 1 ? 's' : ''} au total`);
+      return reply(statusLine(s) + `\n${s.waterings} arrosage${s.waterings > 1 ? 's' : ''} au total\n👀 La voir en direct : ${link}`);
     }
     if (cmd === 'graine') {
+      // la plante est commune à tous les serveurs : on ne la replante qu'une fois en fleur, pour que personne ne puisse effacer sa croissance en cours
+      const cur = (await plant(env, 'plant')).s;
+      if (cur.stage < LAST) return reply('🌱 La plante est en pleine croissance : on ne la replante qu\'une fois qu\'elle a fleuri. Continue à l\'arroser !', true);
       const { s } = await plant(env, 'seed');
       return reply('🌰 Une nouvelle graine est plantée.\n' + statusLine(s));
     }
