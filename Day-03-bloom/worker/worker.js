@@ -1,6 +1,8 @@
 // Day 03 - Bloom : le « bot » Discord, version Cloudflare Workers.
 // Pas de programme qui tourne en permanence : Discord appelle ce Worker (Interactions Endpoint URL) à chaque
 // commande /arroser, /plante ou /graine, et affiche ce qu'il répond.
+// L'état de la plante vit dans un Durable Object : un objet unique pour le monde entier, qui traite les accès
+// au stockage l'un après l'autre. Pas de copie périmée (contrairement à KV), et deux arrosages simultanés comptent tous les deux.
 //
 //   POST /            Discord -> une commande ; la signature Ed25519 est vérifiée avant toute chose
 //   GET  /?state=1    l'état de la plante en JSON (lu par la page bloom.html)
@@ -41,14 +43,37 @@ async function validSignature(request, body, keyHex) {
   } catch { return false; }
 }
 
-// ---- l'état de la plante, dans le stockage KV du Worker (liaison « BLOOM »)
-async function load(env) {
-  const saved = await env.BLOOM.get('plant', 'json');
+// ---- la logique de la plante : une fonction pure, appliquée à l'état par le Durable Object
+function normalize(saved) {
   const s = { ...FRESH, ...(saved || {}) };
   s.stage = Math.max(0, Math.min(LAST, Number(s.stage) || 0));
   return s;
 }
-const save = (env, s) => env.BLOOM.put('plant', JSON.stringify(s));
+function apply(s, action) {
+  if (action === 'water') {
+    if (s.stage >= LAST) return { s, done: true };
+    s.waterings++; s.lastAt = Math.floor(Date.now() / 1000); s.progress++;
+    if (s.progress >= PER_STAGE) { s.stage++; s.progress = 0; }
+    return { s, done: false, changed: true };
+  }
+  if (action === 'seed') return { s: { ...FRESH }, done: false, changed: true };
+  return { s, done: false };   // 'state' et 'plant' : simple lecture
+}
+
+// ---- le Durable Object « Plant » : la seule copie de l'état, jamais périmée
+export class Plant {
+  constructor(state) { this.state = state; }
+  async fetch(request) {
+    const { action } = await request.json();
+    const { s, done, changed } = apply(normalize(await this.state.storage.get('plant')), action);
+    if (changed) await this.state.storage.put('plant', s);
+    return new Response(JSON.stringify({ s, done: !!done }), { headers: { 'Content-Type': 'application/json' } });
+  }
+}
+async function plant(env, action) {
+  const stub = env.PLANT.get(env.PLANT.idFromName('main'));
+  return (await (await stub.fetch('https://plant/', { method: 'POST', body: JSON.stringify({ action }) })).json());
+}
 
 const publicState = s => ({
   ok: true, stage: s.stage + 1, stages: STAGES.length, name: STAGES[s.stage].name, emoji: STAGES[s.stage].emoji,
@@ -65,7 +90,7 @@ export default {
 
     if (method === 'GET') {
       const cors = { 'Access-Control-Allow-Origin': '*' };   // la page est sur GitHub Pages : elle doit pouvoir lire la réponse
-      if (url.searchParams.has('state')) return json(publicState(await load(env)), 200, cors);
+      if (url.searchParams.has('state')) return json(publicState((await plant(env, 'state')).s), 200, cors);
       return json({ ok: true, service: 'bloom' }, 200, cors);
     }
     if (method !== 'POST') return json({ ok: false, error: 'méthode non acceptée' }, 405);
@@ -82,19 +107,19 @@ export default {
     if (msg.type !== 2) return json({ ok: false, error: 'interaction non gérée' }, 400);
 
     const cmd = String(msg.data?.name || '');
-    const s = await load(env);
 
     if (cmd === 'arroser') {
-      if (s.stage >= LAST) return reply("🌸 La fleur est déjà éclose ! Elle n'a plus besoin d'eau. Utilise /graine pour replanter.");
-      s.waterings++; s.lastAt = Math.floor(Date.now() / 1000); s.progress++;
-      if (s.progress >= PER_STAGE) { s.stage++; s.progress = 0; }
-      await save(env, s);
+      const { s, done } = await plant(env, 'water');
+      if (done) return reply("🌸 La fleur est déjà éclose ! Elle n'a plus besoin d'eau. Utilise /graine pour replanter.");
       return reply('💧 Arrosé !\n' + statusLine(s) + (s.stage === LAST ? '\n🎉 La plante a fleuri !' : ''));
     }
-    if (cmd === 'plante') return reply(statusLine(s) + `\n${s.waterings} arrosage${s.waterings > 1 ? 's' : ''} au total`);
+    if (cmd === 'plante') {
+      const { s } = await plant(env, 'plant');
+      return reply(statusLine(s) + `\n${s.waterings} arrosage${s.waterings > 1 ? 's' : ''} au total`);
+    }
     if (cmd === 'graine') {
-      await save(env, { ...FRESH });
-      return reply('🌰 Une nouvelle graine est plantée.\n' + statusLine(FRESH));
+      const { s } = await plant(env, 'seed');
+      return reply('🌰 Une nouvelle graine est plantée.\n' + statusLine(s));
     }
     return reply('Commande inconnue.', true);
   },

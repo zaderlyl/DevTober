@@ -1,6 +1,6 @@
 // Lit l'état de la plante sur le Worker Cloudflare (?state=1) et la dessine. Rien n'est écrit d'ici.
 const BLOOM_URL = 'https://devtober-bloom.devtober-lilian.workers.dev';   // valeur par défaut du champ (le Worker déployé)
-const POLL_MS = 2000;
+const POLL_MS = 3000;   // une page ouverte et visible toute la journée fait ~29 000 requêtes (limite gratuite : 100 000 par jour)
 
 const $ = id => document.getElementById(id);
 const server = $('server'), statusEl = $('status'), steps = $('steps'), drops = $('drops');
