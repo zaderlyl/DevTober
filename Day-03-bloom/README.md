@@ -50,3 +50,8 @@ L'URL du Worker est publique : n'importe qui peut l'appeler. Donc **chaque requ�
    ```
    Avec `DISCORD_GUILD_ID` (clic droit sur le serveur > *Copier l'identifiant*, après avoir activé le mode développeur), les commandes apparaissent tout de suite sur ce serveur.
 5. **GitHub** : l'adresse du Worker est dans `BLOOM_URL` (`bloom.js`) ; pousser le repo. La page lit l'état à cette adresse (modifiable dans le champ, retenue d'une visite à l'autre).
+
+## Bande d'annonce
+`promo/bloom.mp4` (1080×1080, 30 images/s, 10,8 s) et `promo/bloom.gif` (600×600, 15 images/s) : une courte animation qui présente le projet. Elle est **générée par du code** (`promo/render.py`, Python + Pillow, puis `ffmpeg`) : chaque image est calculée à partir du temps, il n'y a aucune capture d'écran. Pour la refaire : `python3 promo/render.py`.
+
+L'interface « chat » de l'animation est **une recréation stylisée**, pas une vraie capture de Discord ; les arrosages y sont mis en scène, pas enregistrés en direct.
