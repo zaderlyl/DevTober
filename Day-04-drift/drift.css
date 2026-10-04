@@ -22,7 +22,7 @@ input, select {
   background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); border-radius: 8px; padding: 8px 10px;
 }
 select option { color: #111; }
-#hops { width: 84px; }
+#hops, #drifters { width: 84px; }
 button {
   font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
   background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 9px 18px;
@@ -35,8 +35,16 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .status b { font-weight: 700; }
 .status.bad { font-size: 14px; opacity: .95; }
 
-.map { background: rgba(0,0,0,.14); border-radius: 16px; overflow: hidden; }
-#map { display: block; width: 100%; height: auto; aspect-ratio: 800 / 460; }
+.map { position: relative; background: rgba(0,0,0,.14); border-radius: 16px; overflow: hidden; }
+/* un doigt fait défiler la page ; deux doigts déplacent et zooment la carte ; à la souris, on glisse pour se déplacer */
+#map { display: block; width: 100%; height: auto; aspect-ratio: 800 / 520; touch-action: pan-x pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
+#map.dragging { cursor: grabbing; }
+#map:focus-visible { outline: 3px solid rgba(255,255,255,.55); outline-offset: -3px; }
+.tools { display: flex; justify-content: flex-end; gap: 6px; margin: 0 0 8px; }
+.tools button { background: rgba(0,0,0,.28); color: var(--ink); border: 1px solid rgba(255,255,255,.45); border-radius: 8px; padding: 7px 14px; font-size: 14px; font-weight: 700; line-height: 1; }
+.tools button:hover { background: rgba(0,0,0,.45); }
+.tools button.attention { background: var(--ink); color: var(--bg); }
+.hint { margin-top: 8px; font-size: 12px; opacity: .75; line-height: 1.5; }
 .edge { fill: none; stroke: rgba(255,255,255,.55); stroke-linecap: round; }   /* l'épaisseur vient du groupe (drift.js), pour rester constante à l'écran */
 .edge.draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw .55s ease-out forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
@@ -60,16 +68,26 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px s
 .note { margin-top: 18px; font-size: 12px; opacity: .75; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .edge.draw { stroke-dashoffset: 0; } }
 
-/* la carte : où l'on est */
-.card { display: flex; gap: 16px; align-items: center; background: rgba(0,0,0,.18); border-radius: 16px; padding: 14px 16px; margin: 4px 0 14px; }
-.card.swap { animation: swap .45s ease-out; }
-@keyframes swap { from { opacity: .2; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.card-pic { flex: none; width: 104px; height: 104px; border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.14); display: grid; place-items: center; }
-.card-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
-#card-init { font-size: 44px; font-weight: 700; opacity: .8; }
-.card-body { min-width: 0; }
-.card-title { font-size: 20px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
-.card-title:hover, .card-title:focus-visible { text-decoration: underline; }
-.card-desc { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; opacity: .8; margin-top: 2px; overflow-wrap: anywhere; }
-.card-text { font-size: 14px; line-height: 1.5; margin-top: 6px; opacity: .95; }
-@media (max-width: 520px) { .card { gap: 12px; padding: 12px; } .card-pic { width: 76px; height: 76px; } .card-title { font-size: 17px; } #card-init { font-size: 32px; } }
+/* une carte par branche : où en est chaque dériveur */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin: 4px 0 14px; }
+.cards:empty { display: none; }
+.bcard { display: flex; gap: 12px; align-items: flex-start; background: rgba(0,0,0,.18); border-radius: 14px; border-left: 6px solid var(--c); padding: 10px 12px; cursor: pointer; text-align: start; }
+.bcard:hover { background: rgba(0,0,0,.28); }
+.bcard:focus-visible { outline: 3px solid rgba(255,255,255,.6); outline-offset: 2px; }
+.bcard.swap { animation: swap .45s ease-out; }
+@keyframes swap { from { opacity: .25; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.bcard .pic { flex: none; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+.bcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bcard .pic img[hidden], .bcard .init[hidden] { display: none; }   /* sans ça, « display » écrase l'attribut hidden */
+.bcard .init { font-size: 28px; font-weight: 700; opacity: .8; }
+.bcard .body { min-width: 0; }
+.bcard .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.bcard .title { font-size: 15px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.bcard .title:hover, .bcard .title:focus-visible { text-decoration: underline; }
+.bcard .tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--c); filter: brightness(1.15); font-weight: 700; }
+.bcard .desc { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; opacity: .75; margin-top: 2px; overflow-wrap: anywhere; }
+.bcard .txt { font-size: 13px; line-height: 1.45; margin-top: 4px; opacity: .92; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.dot { display: inline-block; width: .7em; height: .7em; border-radius: 50%; background: var(--c); margin-inline-end: .5em; vertical-align: baseline; }
+@media (max-width: 520px) { .bcard .pic { width: 52px; height: 52px; } }
+/* sur petit écran la carte est plus haute : on circule mieux dans un cadre presque carré */
+@media (max-width: 600px) { #map { aspect-ratio: 5 / 6; } }
