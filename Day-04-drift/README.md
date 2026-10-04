@@ -28,6 +28,20 @@ Il n'y a **aucun serveur** : la page appelle directement l'API de Wikipédia (`a
 - **Impasse** : une page sans aucun lien arrête la dérive, avec une explication.
 - **Bouton « Arrêter »** : interrompt proprement la dérive en cours (la requête en vol est annulée).
 
+## Les langues
+Deux sélecteurs, qui font deux choses différentes :
+- **La langue de la page** (en haut à droite) traduit tout : textes, boutons, messages, journal. 8 langues : français, English, español, Deutsch, italiano, português, Bahasa Indonesia, 日本語. La langue du navigateur est détectée à la première visite, et le choix est retenu.
+- **L'édition de Wikipédia** (dans les réglages) est l'encyclopédie dans laquelle on dérive. Elle propose les 8 langues de la page et 8 autres (nl, sv, pl, ru, tr, zh, ko, ar). Elle **suit la langue de la page** tant qu'on n'en choisit pas une autre : on peut donc lire la page en français et dériver dans Wikipédia en japonais.
+
+Quand on change d'édition, **l'article de départ est traduit** : Wikipédia connaît les équivalents d'un article dans les autres langues (`prop=langlinks`), donc « Piza » (indonésien) devient « ピザ » (japonais) et « Napoléon Ier » devient « Napoleon » en anglais. Si l'article n'a pas d'équivalent, on prend l'article de départ par défaut de la langue.
+
+Ce que la langue change aussi, côté technique :
+- **Les pages « spéciales »** (fichiers, catégories, aide…) ont un nom différent dans chaque édition : *Fichier* en français, *Berkas* en indonésien, *Datei* en allemand, *ファイル* en japonais. Plutôt qu'une liste codée en dur, la page demande à chaque édition sa liste exacte (`meta=siteinfo`), alias compris, pour ne jamais tirer un fichier ou une catégorie comme « article ».
+- **Les pluriels** suivent les règles de chaque langue (`Intl.PluralRules`) : « 0 saut » en français, « 0 hops » en anglais, pas de pluriel en indonésien ni en japonais. Les textes s'écrivent donc avec une forme par catégorie de pluriel.
+- **La première phrase** d'un article est coupée aussi sur « 。 » (japonais, chinois), et la carte s'aligne selon le sens d'écriture (arabe).
+
+**Attention : les traductions ont été écrites par une IA (Claude)**, pas par des locuteurs natifs. Elles sont complètes et cohérentes (vérification automatique : mêmes phrases et mêmes champs dans chaque langue), mais elles méritent d'être relues par quelqu'un dont c'est la langue, surtout l'indonésien et le japonais. Pour corriger ou ajouter une langue : tout est dans `i18n.js` (l'objet `STR`, une entrée par langue ; ajouter aussi la langue dans `UI_LANGS`).
+
 ## Une balade illustrée
 - **Chaque rond montre la vignette de l'article** (l'image principale de la page). Quand une page n'a pas d'image, le rond affiche sa première lettre.
 - **Une carte en haut** décrit la page où l'on est : son titre (un lien vers l'article), sa **description courte** (« région d'Italie méridionale »), et sa **première phrase**. Les longues parenthèses de traductions (« en italien : Calabria /kaˈlabrja/ ; … ») sont retirées pour garder une phrase lisible, et elle est coupée à environ 190 caractères.

@@ -9,30 +9,35 @@
 </head>
 <body>
 <main>
-  <h1>Day 04 / Drift</h1>
-  <p class="sub">On part d'un article Wikipédia. À chaque étape, la page <b>compte les liens</b> vers d'autres pages, <b>tire un numéro au hasard</b> et <b>suit ce lien</b>. Elle recommence X fois : voilà la dérive.</p>
+  <div class="top">
+    <h1>Day 04 / Drift</h1>
+    <label class="ui-switch"><span data-i18n="ui">Langue</span>
+      <select id="ui"></select>
+    </label>
+  </div>
+  <p class="sub" data-i18n-rich="sub">On part d'un article Wikipédia. À chaque étape, la page <b>compte les liens</b> vers d'autres pages, <b>tire un numéro au hasard</b> et <b>suit ce lien</b>. Elle recommence X fois : voilà la dérive.</p>
 
   <form class="controls" id="form">
-    <label class="grow">Article de départ
+    <label class="grow"><span data-i18n="start">Article de départ</span>
       <span class="row"><input id="start" type="text" value="Pizza" maxlength="120" autocomplete="off" spellcheck="false" required>
-      <button type="button" class="ghost" id="rand" title="Choisir un article au hasard">Au hasard</button></span>
+      <button type="button" class="ghost" id="rand" data-i18n="rand" data-i18n-title="randTitle" title="Choisir un article au hasard">Au hasard</button></span>
     </label>
-    <label>Sauts (X)
+    <label><span data-i18n="hops">Sauts (X)</span>
       <input id="hops" type="number" min="1" max="40" value="10" required>
     </label>
-    <label>Langue
-      <select id="lang"><option value="fr">Français</option><option value="en">English</option></select>
+    <label><span data-i18n="edition">Wikipédia</span>
+      <select id="lang"></select>
     </label>
-    <label>Vitesse
-      <select id="speed"><option value="1500">Lente</option><option value="900" selected>Normale</option><option value="350">Rapide</option></select>
+    <label><span data-i18n="speed">Vitesse</span>
+      <select id="speed"><option value="1500" data-i18n="slow">Lente</option><option value="900" selected data-i18n="normal">Normale</option><option value="350" data-i18n="fast">Rapide</option></select>
     </label>
-    <button type="submit" id="go">Dériver</button>
-    <button type="button" class="ghost" id="stop" hidden>Arrêter</button>
+    <button type="submit" id="go" data-i18n="go">Dériver</button>
+    <button type="button" class="ghost" id="stop" hidden data-i18n="stop">Arrêter</button>
   </form>
 
-  <p class="status" id="status" role="status" aria-live="polite">Choisis un article et un nombre de sauts, puis lance la dérive.</p>
+  <p class="status" id="status" role="status" aria-live="polite" data-i18n="idle">Choisis un article et un nombre de sauts, puis lance la dérive.</p>
 
-  <div class="card" id="card" hidden>
+  <div class="card" id="card" hidden dir="auto">
     <div class="card-pic"><img id="card-img" alt="" width="104" height="104" hidden><span id="card-init" aria-hidden="true"></span></div>
     <div class="card-body">
       <a id="card-title" class="card-title" target="_blank" rel="noopener"></a>
@@ -42,12 +47,13 @@
   </div>
 
   <div class="map" id="mapbox">
-    <svg id="map" viewBox="0 0 800 460" role="img" aria-label="Le chemin parcouru de page en page"></svg>
+    <svg id="map" viewBox="0 0 800 460" role="img" aria-label="Le chemin parcouru de page en page" data-i18n-aria="mapLabel"></svg>
   </div>
 
   <ol class="log" id="log"></ol>
-  <p class="note">Les pages et leurs liens viennent en direct de Wikipédia, directement depuis ton navigateur : il n'y a aucun serveur entre les deux. Chaque saut fait deux requêtes (la page, puis sa vignette et sa première phrase), avec une petite pause.</p>
+  <p class="note" data-i18n="note">Les pages et leurs liens viennent en direct de Wikipédia, directement depuis ton navigateur : il n'y a aucun serveur entre les deux. Chaque saut fait deux requêtes (la page, puis sa vignette et sa première phrase), avec une petite pause.</p>
 </main>
+<script src="i18n.js"></script>
 <script src="drift.js"></script>
 </body>
 </html>
