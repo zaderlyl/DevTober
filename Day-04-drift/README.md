@@ -22,17 +22,27 @@ Le journal sous le dessin garde chaque saut : « *Calabre — 604 pages liées �
 ## Fonctionnement technique
 Il n'y a **aucun serveur** : la page appelle directement l'API de Wikipédia (`action=parse`, avec `origin=*`, qui autorise les appels depuis une page web), extrait les liens du HTML de l'article avec `DOMParser`, puis tire au hasard avec `Math.random()`.
 
-- **Une requête par saut**, avec une pause réglable (lente, normale, rapide), et un **plafond de 40 sauts** pour rester poli avec Wikipédia.
+- **Deux requêtes par saut** (la page, puis sa fiche), avec une pause réglable (lente, normale, rapide), et un **plafond de 40 sauts** pour rester poli avec Wikipédia.
 - **Redirections** : le titre affiché est le titre officiel après redirection.
 - **Pages disparues** : si le lien tiré mène à un article qui n'existe plus, on en tire un autre (3 essais), sinon la dérive s'arrête avec le message d'erreur.
 - **Impasse** : une page sans aucun lien arrête la dérive, avec une explication.
 - **Bouton « Arrêter »** : interrompt proprement la dérive en cours (la requête en vol est annulée).
 
+## Une balade illustrée
+- **Chaque rond montre la vignette de l'article** (l'image principale de la page). Quand une page n'a pas d'image, le rond affiche sa première lettre.
+- **Une carte en haut** décrit la page où l'on est : son titre (un lien vers l'article), sa **description courte** (« région d'Italie méridionale »), et sa **première phrase**. Les longues parenthèses de traductions (« en italien : Calabria /kaˈlabrja/ ; … ») sont retirées pour garder une phrase lisible, et elle est coupée à environ 190 caractères.
+- La fiche (vignette, description, phrase) arrive **un instant après** le rond, avec un seul appel supplémentaire par saut (`prop=pageimages|extracts|description`) : la dérive n'attend pas.
+- Le rond grossit quand il y a peu d'étapes et rétrécit quand le dessin s'étire. En dessous d'une certaine taille (petits écrans, longues dérives), les images sont masquées et il reste des points : la carte, elle, montre toujours l'image de l'étape en cours.
+- Une image n'est affichée que si elle vient des serveurs d'images de Wikimedia (`upload.wikimedia.org` ou `thumb.wikimedia.org`).
+
 ## Le dessin
 Le tracé est un **serpentin** qui ondule, calculé d'après X (on le connaît au départ : il tient toujours dans la zone). La caméra ne cadre que les étapes déjà faites : le dessin **s'étire donc à chaque saut**, en zoomant peu à peu en arrière. Les noms n'apparaissent que s'ils ont la place (priorité à l'étape actuelle, au départ, puis aux plus récentes) ; les autres restent lisibles au survol et dans le journal. Chaque nom est un lien vers l'article.
 
 ## Sécurité
-Les titres viennent de l'extérieur : ils sont toujours affichés avec `textContent` (jamais `innerHTML`), et les liens sont construits avec `encodeURIComponent` vers `https://<langue>.wikipedia.org/wiki/…`, avec `rel="noopener"`.
+Les titres, descriptions et phrases viennent de l'extérieur : ils sont toujours affichés avec `textContent` (jamais `innerHTML`), et les liens sont construits avec `encodeURIComponent` vers `https://<langue>.wikipedia.org/wiki/…`, avec `rel="noopener"`.
+
+## Vie privée
+La page ne parle qu'à Wikipédia et Wikimedia, directement depuis le navigateur du visiteur : leurs serveurs voient donc son adresse IP, comme pour n'importe quelle visite sur Wikipédia. Aucune donnée n'est envoyée ailleurs, et rien n'est stocké hors du navigateur (les réglages, en `localStorage`).
 
 ## Installation
 Rien à installer : pousser le repo, la page est servie par GitHub Pages. Les réglages (article, X, langue, vitesse) sont retenus d'une visite à l'autre (`localStorage`).

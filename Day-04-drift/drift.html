@@ -32,12 +32,21 @@
 
   <p class="status" id="status" role="status" aria-live="polite">Choisis un article et un nombre de sauts, puis lance la dérive.</p>
 
+  <div class="card" id="card" hidden>
+    <div class="card-pic"><img id="card-img" alt="" width="104" height="104" hidden><span id="card-init" aria-hidden="true"></span></div>
+    <div class="card-body">
+      <a id="card-title" class="card-title" target="_blank" rel="noopener"></a>
+      <p id="card-desc" class="card-desc"></p>
+      <p id="card-text" class="card-text"></p>
+    </div>
+  </div>
+
   <div class="map" id="mapbox">
     <svg id="map" viewBox="0 0 800 460" role="img" aria-label="Le chemin parcouru de page en page"></svg>
   </div>
 
   <ol class="log" id="log"></ol>
-  <p class="note">Les pages et leurs liens viennent en direct de Wikipédia, directement depuis ton navigateur : il n'y a aucun serveur entre les deux. Chaque saut est une requête, avec une petite pause.</p>
+  <p class="note">Les pages et leurs liens viennent en direct de Wikipédia, directement depuis ton navigateur : il n'y a aucun serveur entre les deux. Chaque saut fait deux requêtes (la page, puis sa vignette et sa première phrase), avec une petite pause.</p>
 </main>
 <script src="drift.js"></script>
 </body>
