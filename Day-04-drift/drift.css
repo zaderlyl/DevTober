@@ -1,0 +1,54 @@
+:root { --bg: #1f9d55; --ink: #fff; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  min-height: 100vh; background: var(--bg); color: var(--ink);
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 28px 16px 48px;
+}
+main { max-width: 860px; margin: 0 auto; }
+h1 { font-size: clamp(28px, 6vw, 44px); letter-spacing: -.01em; }
+.sub { margin-top: 8px; font-size: 14px; opacity: .85; line-height: 1.5; max-width: 62ch; }
+a { color: inherit; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 24px 0 10px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
+.controls .grow { flex: 1 1 280px; }
+.row { display: flex; gap: 8px; }
+.row input { flex: 1; min-width: 0; }
+input, select {
+  font: inherit; font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); border-radius: 8px; padding: 8px 10px;
+}
+select option { color: #111; }
+#hops { width: 84px; }
+button {
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 9px 18px;
+}
+button.ghost { background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,.55); font-weight: 400; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(255,255,255,.55); outline-offset: 2px; }
+
+.status { margin: 14px 0 8px; min-height: 44px; font-size: 16px; line-height: 1.45; }
+.status b { font-weight: 700; }
+.status.bad { font-size: 14px; opacity: .95; }
+
+.map { background: rgba(0,0,0,.14); border-radius: 16px; overflow: hidden; }
+#map { display: block; width: 100%; height: auto; aspect-ratio: 800 / 460; }
+.edge { fill: none; stroke: rgba(255,255,255,.55); stroke-linecap: round; }   /* l'épaisseur vient du groupe (drift.js), pour rester constante à l'écran */
+.edge.draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw .55s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.node circle { fill: var(--bg); stroke: var(--ink); }
+.node.start circle { fill: var(--ink); }
+.node.now circle { fill: var(--ink); stroke: #ffd84a; }
+.node.pop { animation: pop .45s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: center; }
+@keyframes pop { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.node text { fill: var(--ink); font-size: calc(14px * var(--k, 1)); font-family: ui-monospace, Menlo, monospace; paint-order: stroke; stroke: var(--bg); stroke-width: calc(4px * var(--k, 1)); stroke-linejoin: round; }
+.node a { cursor: pointer; }
+
+.log { list-style: none; margin-top: 18px; font-size: 13px; line-height: 1.5; }
+.log li { padding: 7px 0; border-top: 1px solid rgba(255,255,255,.22); opacity: .9; }
+.log li:first-child { border-top: 0; }
+.log .dim { opacity: .7; }
+.note { margin-top: 18px; font-size: 12px; opacity: .75; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .edge.draw { stroke-dashoffset: 0; } }

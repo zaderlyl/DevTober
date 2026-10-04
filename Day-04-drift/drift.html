@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 04 - Drift</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="drift.css">
+</head>
+<body>
+<main>
+  <h1>Day 04 / Drift</h1>
+  <p class="sub">On part d'un article Wikipédia. À chaque étape, la page <b>compte les liens</b> vers d'autres pages, <b>tire un numéro au hasard</b> et <b>suit ce lien</b>. Elle recommence X fois : voilà la dérive.</p>
+
+  <form class="controls" id="form">
+    <label class="grow">Article de départ
+      <span class="row"><input id="start" type="text" value="Pizza" maxlength="120" autocomplete="off" spellcheck="false" required>
+      <button type="button" class="ghost" id="rand" title="Choisir un article au hasard">Au hasard</button></span>
+    </label>
+    <label>Sauts (X)
+      <input id="hops" type="number" min="1" max="40" value="10" required>
+    </label>
+    <label>Langue
+      <select id="lang"><option value="fr">Français</option><option value="en">English</option></select>
+    </label>
+    <label>Vitesse
+      <select id="speed"><option value="1500">Lente</option><option value="900" selected>Normale</option><option value="350">Rapide</option></select>
+    </label>
+    <button type="submit" id="go">Dériver</button>
+    <button type="button" class="ghost" id="stop" hidden>Arrêter</button>
+  </form>
+
+  <p class="status" id="status" role="status" aria-live="polite">Choisis un article et un nombre de sauts, puis lance la dérive.</p>
+
+  <div class="map" id="mapbox">
+    <svg id="map" viewBox="0 0 800 460" role="img" aria-label="Le chemin parcouru de page en page"></svg>
+  </div>
+
+  <ol class="log" id="log"></ol>
+  <p class="note">Les pages et leurs liens viennent en direct de Wikipédia, directement depuis ton navigateur : il n'y a aucun serveur entre les deux. Chaque saut est une requête, avec une petite pause.</p>
+</main>
+<script src="drift.js"></script>
+</body>
+</html>
