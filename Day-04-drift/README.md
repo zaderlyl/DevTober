@@ -77,12 +77,3 @@ La page ne parle qu'à Wikipédia et Wikimedia, directement depuis le navigateur
 
 ## Installation
 Rien à installer : pousser le repo, la page est servie par GitHub Pages. Les réglages (article, nombre de dériveurs, X, langue, édition, vitesse) sont retenus d'une visite à l'autre (`localStorage`).
-
-## Bande d'annonce
-`promo/drift.mp4` (1080×1080, 30 images/s, 14,4 s) et `promo/drift.gif` (600×600, 15 images/s) : une courte animation qui présente le projet.
-
-- **Les données sont réelles.** `promo/drift-run.json` est le résultat d'une **vraie dérive** faite sur Wikipédia le 2026-10-04 à 19:39 (heure de Paris) avec exactement la règle de la page : 4 dériveurs partis de « Pizza » (170 pages liées), 8 sauts chacun, vrais titres, vrai nombre de pages liées, vrai numéro tiré. C'est la première dérive lancée : elle n'a pas été triée. Pour en refaire une : `python3 promo/fetch_run.py [article] [dériveurs] [sauts] [langue]`.
-- **Le dessin est calculé.** `promo/render.py` (Python + Pillow, puis `ffmpeg`) dessine chaque image à partir du temps : aucune capture d'écran. Il refait le même tracé en étoile que la page, avec une caméra qui s'éloigne puis plonge dans une branche. Pour refaire l'animation : `python3 promo/render.py`.
-- **Aucune image d'article n'est utilisée.** Les vignettes de Wikipédia ont des licences variées qui demandent une attribution : l'animation n'affiche donc que des titres, des nombres et des couleurs. Les titres d'articles ne sont pas protégés.
-- `fetch_run.py` respecte l'étiquette de l'API de Wikimedia : une requête à la fois, avec une pause, et un `User-Agent` qui dit qui on est. Il n'enregistre que des titres et des nombres.
-
