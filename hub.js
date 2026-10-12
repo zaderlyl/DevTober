@@ -11,7 +11,7 @@ const DAYS = [
   { word: 'Gravity', path: 'Day-09-gravity/gravity.html' },
   { word: 'Fold' },
   { word: 'Ripple' },
-  { word: 'Lost' },
+  { word: 'Lost', path: 'Day-12-lost/lost.html' },
   { word: 'Tangle' },
   { word: 'Bounce' },
   { word: 'Shadow' },

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 12 - Lost</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e8b04a'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='%2317151f'%3E%3F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="lost.css">
+</head>
+<body>
+<main>
+  <h1>Day 12 / Lost</h1>
+  <p class="sub">Six langages de programmation que presque plus personne n'écrit. Choisis-en un : il est <b>déterré</b>. À gauche son code, à droite son résultat. Tu peux <b>modifier le code</b> si tu connais le langage, puis l'exécuter pas à pas. Quand un programme se termine sans erreur, le langage est <b>retrouvé</b>.</p>
+
+  <div class="found" aria-label="Langages retrouvés">
+    <span class="k">Retrouvés</span> <b id="count">0 / 6</b>
+    <span class="pips" id="pips" aria-hidden="true"></span>
+  </div>
+
+  <div class="grid">
+    <nav aria-label="Langages">
+      <ul class="langs" id="list"></ul>
+    </nav>
+
+    <section class="panel" aria-labelledby="l-name">
+      <header>
+        <h2 id="l-name"></h2>
+        <p class="meta" id="l-meta"></p>
+      </header>
+      <p class="why" id="l-why"></p>
+
+      <div class="work">
+        <div class="col">
+          <div class="label">Le code <span class="hint">(modifiable)</span></div>
+          <div class="editor">
+            <pre class="hl" id="hl" aria-hidden="true"></pre>
+            <textarea id="ed" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Code du programme, modifiable"></textarea>
+          </div>
+          <div class="inserts" id="inserts" hidden>
+            <span class="label">Insérer</span>
+            <button type="button" class="ghost" data-g="·" aria-label="espace">·</button>
+            <button type="button" class="ghost" data-g="⇥" aria-label="tabulation">⇥</button>
+            <button type="button" class="ghost" data-g="↵" aria-label="retour à la ligne">↵</button>
+          </div>
+        </div>
+        <div class="col">
+          <div class="label">Le résultat</div>
+          <pre class="term" id="out" role="log" aria-label="Sortie du programme"></pre>
+          <p class="err" id="err" role="alert" hidden></p>
+          <div class="state mono" id="state" aria-label="État de la machine">—</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" id="run" disabled>Exécuter</button>
+        <button type="button" class="ghost" id="step" disabled>Un pas</button>
+        <button type="button" class="ghost" id="reset" disabled>Recommencer</button>
+        <button type="button" class="ghost" id="restore" disabled>Rétablir l'exemple</button>
+        <label class="speed">Vitesse
+          <input type="range" id="speed" min="0" max="4.3" step="0.05" value="1">
+          <span id="speedv"></span>
+        </label>
+      </div>
+
+      <p class="note" id="l-note"></p>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+  </div>
+</main>
+<script src="lost.js"></script>
+</body>
+</html>

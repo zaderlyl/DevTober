@@ -23,7 +23,7 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 | 09 | Gravity | [Day-09-gravity](Day-09-gravity) |
 | 10 | Fold | |
 | 11 | Ripple | |
-| 12 | Lost | |
+| 12 | Lost | [Day-12-lost](Day-12-lost) |
 | 13 | Tangle | |
 | 14 | Bounce | |
 | 15 | Shadow | |
