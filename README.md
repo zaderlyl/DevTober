@@ -20,7 +20,7 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 | 06 | Tiny | |
 | 07 | Swarm | |
 | 08 | Maze | |
-| 09 | Gravity | |
+| 09 | Gravity | [Day-09-gravity](Day-09-gravity) |
 | 10 | Fold | |
 | 11 | Ripple | |
 | 12 | Lost | |

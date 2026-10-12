@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 09 - Gravity</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="fonts/Epilogue-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="gravity.css">
+</head>
+<body>
+<main>
+  <h1 id="title"><span class="sr">Day 09 / Gravity</span><span aria-hidden="true">Day 09 / <span id="word"></span></span></h1>
+  <p class="sub">Une police variable peut avoir un poids de <b>100</b> à <b>900</b>. Ici, ce poids est une <b>masse</b> : plus une lettre est rare en français, plus elle est lourde. Les lourdes coulent, les légères flottent, et ta phrase se range toute seule.</p>
+
+  <form class="write" id="form">
+    <label class="grow">Ta phrase
+      <input id="text" type="text" maxlength="160" value="Le zèbre jaloux fixe un kiwi qui joue du xylophone." autocomplete="off" spellcheck="false" required>
+    </label>
+    <button type="submit">Lâcher</button>
+  </form>
+
+  <div class="tankwrap" id="wrap">
+    <canvas id="tank" aria-label="Un bassin où les lettres de ta phrase flottent ou coulent selon leur poids"></canvas>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+  <p class="sr" id="phrase"></p>
+
+  <div class="actions">
+    <button type="button" id="anti" class="mono">import antigravity</button>
+    <button type="button" class="ghost" id="shake">Secouer</button>
+    <button type="button" class="ghost" id="replay">Rejouer</button>
+    <button type="button" class="ghost" id="tilt" hidden>Activer l'inclinaison</button>
+  </div>
+
+  <p class="caption" id="caption" role="status" aria-live="polite"></p>
+
+  <section class="facts" id="facts" hidden aria-label="Résultat">
+    <div class="fact"><span class="k">La plus légère</span><span class="v" id="f-light"></span></div>
+    <div class="fact"><span class="k">La plus lourde</span><span class="v" id="f-heavy"></span></div>
+    <div class="fact wide"><span class="k">Ta phrase, lue de la plus légère à la plus lourde</span><span class="v mono" id="f-order"></span></div>
+  </section>
+
+  <div class="legend" aria-hidden="true"><span>poids 100</span><i></i><span>900</span></div>
+  <p class="note">Glisse une lettre pour la lancer, clique-la pour l'alourdir (+200 par clic), remue le bassin avec la souris. Sur téléphone, incline l'appareil pour changer la direction du « bas » ; sur ordinateur, utilise les flèches du clavier. Les lettres rares (<b>k, w, z, x, y</b>…) sont les plus lourdes, les fréquentes (<b>e, s, a, i</b>…) les plus légères.</p>
+</main>
+<script src="gravity.js"></script>
+</body>
+</html>

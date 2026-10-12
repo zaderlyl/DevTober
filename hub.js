@@ -8,7 +8,7 @@ const DAYS = [
   { word: 'Tiny' },
   { word: 'Swarm' },
   { word: 'Maze' },
-  { word: 'Gravity' },
+  { word: 'Gravity', path: 'Day-09-gravity/gravity.html' },
   { word: 'Fold' },
   { word: 'Ripple' },
   { word: 'Lost' },

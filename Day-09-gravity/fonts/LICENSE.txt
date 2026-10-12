@@ -1,0 +1,7 @@
+Epilogue-Variable.woff2
+
+Police variable « Epilogue » (axe de graisse : 100 à 900).
+Fichier repris tel quel du portfolio de l'auteur (portfolio-v2/assets/dev/fonts/).
+Epilogue est dessinée par Etcetera Type Company et distribuée sous licence SIL Open Font License 1.1 (https://openfontlicense.org),
+qui autorise de l'utiliser, la copier et la redistribuer, y compris sur un site web. Vérifie la licence de ton exemplaire avant
+de republier ce dossier ailleurs.
