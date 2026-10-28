@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 28 - Grow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<style>
+:root { --bg: #1f9d55; --ink: #fff; --card: #fff; --card-ink: #1c1b29; --muted: #6b6a7b; --up: #12a150; --code-bg: #14121f; --code-ink: #e8e6f5; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: ui-monospace, Menlo, monospace; padding: 28px 16px 56px; }
+main { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: clamp(28px, 6vw, 44px); letter-spacing: -.01em; }
+h2 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+.sub { margin-top: 8px; font-size: 15px; line-height: 1.5; opacity: .92; max-width: 70ch; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); grid-template-areas: "dash code" "levers code"; grid-template-rows: auto 1fr; gap: 16px; margin-top: 20px; align-items: start; }
+.layout > .dash { grid-area: dash; } .layout > .levers { grid-area: levers; } .layout > .code { grid-area: code; position: sticky; top: 12px; }
+@media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "dash" "code" "levers"; grid-template-rows: auto; } .layout > .code { position: static; } }
+
+.card { background: var(--card); color: var(--card-ink); border-radius: 18px; padding: 18px; }
+.brandrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 18px; }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #e3f5ea; color: var(--bg); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+.kpi { background: #f5f4fb; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi .k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font-size: clamp(22px, 4vw, 30px); font-weight: 700; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.kpi .real { font-size: 12px; color: var(--muted); min-height: 16px; }
+#chart { display: block; width: 100%; height: auto; margin-top: 12px; background: #fbfbfe; border-radius: 12px; }
+#chart text { font-family: ui-monospace, Menlo, monospace; font-size: 11px; fill: var(--muted); }
+.card h2 { margin: 18px 0 8px; color: var(--muted); }
+.card.levers h2 { margin-top: 0; }
+#levers { list-style: none; display: grid; gap: 8px; }
+#levers button {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 3px;
+  background: #fff; color: var(--card-ink); border: 1px solid #d9d6ee; border-radius: 10px; padding: 10px 12px; font-weight: 400;
+}
+#levers button b { font-size: 14px; }
+#levers button span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+#levers button:hover:not(:disabled) { border-color: var(--bg); background: #f1faf4; }
+#levers button:disabled { cursor: default; background: #f0efe9; }
+#levers button.done { opacity: .6; }
+
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.ctl #buzz { flex: 1; }
+button.mini { font-size: 12px; font-weight: 400; background: #fff; color: var(--card-ink); border: 1px solid #d9d6ee; padding: 5px 10px; }
+.log { list-style: none; display: grid; gap: 6px; min-height: 20px; font-size: 12px; line-height: 1.45; color: var(--card-ink); }
+.log li { background: #f5f4fb; border-radius: 8px; padding: 6px 9px; }
+#levers button .price { font-size: 12px; font-weight: 700; color: var(--bg); }
+#levers button:disabled:not(.done) .price { color: #a43b2c; }
+#levers button b i { font-style: normal; font-weight: 400; color: var(--muted); }
+#levers button.done b::after { content: '  ✓ appliqué'; font-weight: 400; color: var(--up); font-size: 12px; }
+
+.code { background: var(--code-bg); color: var(--code-ink); border-radius: 18px; padding: 14px; min-width: 0; }
+.codehead { display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 12px; }
+.codehead { position: relative; }
+.codehead h2 { color: var(--code-ink); opacity: .8; }
+.sizebox { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; width: 100%; }
+.sizebox .big { font-size: clamp(30px, 5vw, 44px); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: #7ee2a2; }
+#size { font-size: 12px; opacity: .85; font-variant-numeric: tabular-nums; }
+.meter { width: 100%; height: 6px; background: rgba(255,255,255,.12); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: #7ee2a2; transition: width .8s cubic-bezier(.2,.9,.3,1); }
+.delta { position: absolute; right: 4px; top: 0; font-size: 13px; font-weight: 700; color: #ffd84a; opacity: 0; }
+.delta.pop { animation: pop 2.2s ease-out; }
+@keyframes pop { 0% { opacity: 0; transform: translateY(8px) scale(.9); } 12% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+#code { max-height: clamp(380px, 70vh, 700px); overflow: auto; font-size: 13px; line-height: 1.6; border-radius: 10px; background: rgba(255,255,255,.04); padding: 8px 0; }
+#code div { white-space: pre; padding: 0 12px 0 0; min-width: max-content; }
+#code div::before { content: attr(data-n); display: inline-block; width: 4ch; margin-right: 12px; text-align: right; opacity: .35; }
+#code .cm { opacity: .6; }
+#code .new { background: rgba(255, 216, 74, .16); animation: flash 1.8s ease-out, type .7s steps(34, end) both; animation-delay: 0s, calc(var(--i, 0) * 140ms); }
+#code .k { color: #c8a6ff; } #code .s { color: #ffd2a1; } #code .n { color: #7fd1ff; }
+#code button.fold { display: block; width: 100%; text-align: left; font: inherit; font-size: 12px; font-weight: 400; background: rgba(255,255,255,.08); color: var(--code-ink); border: 0; border-radius: 0; padding: 4px 12px; margin: 4px 0; }
+#code button.fold:hover { background: rgba(255,255,255,.14); }
+@keyframes flash { from { background: rgba(255, 216, 74, .55); } }
+@keyframes type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+button { font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 10px 16px; }
+button.ghost { background: transparent; color: var(--code-ink); border: 1px solid rgba(255,255,255,.4); font-weight: 400; }
+button:focus-visible, #code:focus-visible { outline: 3px solid #ffd84a; outline-offset: 2px; }
+
+#verdict { margin-top: 16px; min-height: 24px; font-size: 18px; font-weight: 700; line-height: 1.4; max-width: 72ch; }
+.note { margin-top: 12px; font-size: 12px; line-height: 1.55; opacity: .85; max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .delta.pop { opacity: 1; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Day 28 / Grow</h1>
+  <p class="sub">Cette startup doit <b>grandir</b>. Chaque levier coûte de l'argent, fait monter la courbe, et réécrit le code de la page que tu vois à droite. Ce code est celui qui tourne vraiment : en le téléchargeant, tu obtiens une page qui démarre déjà avec tes leviers. Objectif : <b>1 million d'utilisateurs affichés</b> et une levée de fonds, avant la faillite.</p>
+
+  <div class="layout">
+    <section class="card dash" aria-label="Tableau de bord">
+      <div class="brandrow"><b id="brand"></b><span class="badge" id="tag" hidden></span></div>
+      <div class="kpis">
+        <div class="kpi"><span class="k" id="k-label"></span><span class="v" id="k-users"></span><span class="real" id="k-real"></span></div>
+        <div class="kpi"><span class="k">Valorisation</span><span class="v" id="k-val"></span><span class="real" id="k-notes"></span></div>
+        <div class="kpi"><span class="k">Trésorerie</span><span class="v" id="k-cash"></span><span class="real" id="k-runway"></span></div>
+      </div>
+      <div class="ctl">
+        <span id="month"></span><span id="buzz"></span>
+        <button type="button" class="mini" id="pause" aria-pressed="false">Pause</button>
+        <button type="button" class="mini" id="speed">Vitesse ×1</button>
+      </div>
+      <svg id="chart" viewBox="0 0 600 240" role="img" aria-label="Courbe de croissance"></svg>
+      <h2>Journal</h2>
+      <ul id="log" class="log" aria-label="Événements"></ul>
+    </section>
+
+    <section class="card levers" aria-label="Leviers de croissance">
+      <h2>Leviers de croissance</h2>
+      <ul id="levers"></ul>
+    </section>
+
+    <section class="code" aria-label="Code source de cette page">
+      <div class="codehead">
+        <h2>Le code de cette page</h2>
+        <div class="sizebox"><span class="big" id="bytes"></span><span id="size"></span></div>
+        <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+        <span class="delta" id="delta" aria-hidden="true"></span>
+      </div>
+      <div id="code" tabindex="0"></div>
+      <div class="actions">
+        <button type="button" id="copy">Copier le code</button>
+        <button type="button" id="dl">Télécharger cette page</button>
+        <button type="button" class="ghost" id="reset">Tout annuler</button>
+      </div>
+    </section>
+  </div>
+
+  <p id="verdict" role="status" aria-live="polite"></p>
+  <p class="note">Satire : aucun utilisateur n'a été acheté pour de vrai, et aucune donnée ne quitte ta page. Les leviers sont ajoutés au code sous forme de lignes réellement exécutées ; « Tout annuler » repart de la page telle qu'elle était à son ouverture.</p>
+</main>
+
+<script>
+"use strict";
+// La page lit son propre code au chargement : PRISTINE est son texte, tel qu'il a été reçu.
+const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+const BLOCK = /^\/\/ === CROISSANCE ===\n([\s\S]*?)^\/\/ === FIN ===$/m;
+const MARK = /^\/\/ levier : (\w+)$/;
+const WINDOW = 24;
+
+const fresh = () => ({
+  users: 3, real: 3, g: 0.01, hype: 0, label: 'Utilisateurs actifs', brand: 'Growth Inc.', tag: '',
+  axisCut: false, showReal: true, valuation: 0, cash: 150000, burn: 4000, month: 0, over: false,
+  notes: [], log: [], hist: Array(WINDOW).fill(3),
+});
+let S = fresh();
+
+// Les leviers modifient l'état de la startup (utilisateurs, croissance, trésorerie), et rien d'autre.
+function buy(n, price) { S.users += n; S.cash -= price; }
+function rename(label, k, price) { S.label = label; S.users *= k; S.cash -= price; }
+function countReloads(k, price) { S.users *= k; S.cash -= price; }
+function cutAxis() { S.axisCut = true; }
+function viral(f) { S.g += f.boost; S.cash -= f.cost; }
+function pivot(c) { S.brand = c.name; S.tag = c.tagline; S.g += c.boost; S.cash -= c.cost; }
+function hire(p) { S.g += p.boost; S.burn += p.salary; S.notes.push(p.name + ', ' + p.title); }
+function press(outlet, price) { S.hype = Math.min(100, S.hype + 40); S.cash -= price; S.log.unshift('M' + S.month + ' · Article sponsorisé : ' + outlet + '.'); }
+function hideReal() { S.showReal = false; }
+function raise(r) { S.valuation = r.multiple; S.cash += r.received; S.notes.push('Levée : ' + r.amount + ' annoncés, ' + r.received / 1000 + ' k€ versés'); }
+function split(services, price) { S.g += 0.005 * services.length; S.burn += 3000; S.cash -= price; S.notes.push(services.length + ' microservices'); }
+
+const SERVICES = ['auth', 'billing', 'search', 'notifs', 'analytics', 'ml', 'chat', 'export'];
+const NAMES = ['Chad', 'Brad', 'Kyle', 'Madison'];
+const TITLES = ['Head of Growth', 'VP Growth', 'Growth Hacker', 'Chief Growth Officer'];
+const OUTLETS = ['TechCrunch (sponsorisé)', 'Les Échos (publi-rédactionnel)', 'un podcast de 3 auditeurs', 'Forbes 30 under 30 (payant)', 'une newsletter LinkedIn'];
+const used = id => grown.filter(g => g.id === id).length;
+const LEVERS = [
+  { id: 'buy', max: 6, name: 'Acheter 10 000 utilisateurs',
+    hint: 'Bots inclus, sans supplément. Le prix monte à chaque achat.',
+    cost() { return Math.round(5000 * 1.5 ** used('buy')); },
+    lines() { return ['buy(10000, ' + this.cost() + ');']; } },
+  { id: 'press', max: 5, name: 'Article sponsorisé',
+    hint: 'Buzz : la croissance triple, puis le buzz retombe en quelques mois.',
+    cost() { return Math.round(3000 * 1.4 ** used('press')); },
+    lines() { return ['press(' + JSON.stringify(OUTLETS[used('press')]) + ', ' + this.cost() + ');']; } },
+  { id: 'rename', max: 1, name: 'Renommer la métrique',
+    hint: '« Utilisateurs actifs » devient « Personnes ayant déjà vu la page » (×12).',
+    cost: () => 1000,
+    lines: () => ["rename('Personnes ayant déjà vu la page', 12, 1000);"] },
+  { id: 'count', max: 1, name: 'Compter chaque rechargement',
+    hint: 'Un utilisateur qui appuie trois fois sur F5 en vaut trois (×3).',
+    cost: () => 500,
+    lines: () => ['countReloads(3, 500);'] },
+  { id: 'cut', max: 1, name: 'Couper l\'axe',
+    hint: 'Plus de zéro en bas, plus de chiffres à gauche. La pente est identique, enfin presque.',
+    cost: () => 0,
+    lines: () => ['cutAxis();'] },
+  { id: 'viral', max: 1, name: 'Bouton « Inviter 10 amis »',
+    hint: 'Croissance mensuelle +2 points. Personne n\'a d\'amis qui veulent ça.',
+    cost: () => 2000,
+    lines: () => ["const invite = { boost: 0.02, cost: 2000 };", 'viral(invite);'] },
+  { id: 'pivot', max: 1, name: 'Pivoter vers l\'IA',
+    hint: 'Même produit, nouveau nom, croissance +6 points.',
+    cost: () => 8000,
+    lines: () => ["const ai = { name: 'Growth.ai', tagline: \"Maintenant avec de l'IA\", boost: 0.06, cost: 8000 };", 'pivot(ai);'] },
+  { id: 'hire', max: 4, name: 'Embaucher un Head of Growth',
+    hint: 'Croissance +3 points, salaire 6 000 € par mois. Il a un prénom américain.',
+    cost: () => 0,
+    lines() { const i = used('hire'); return ['const ' + NAMES[i].toLowerCase() + " = { name: '" + NAMES[i] + "', title: '" + TITLES[i] + "', boost: 0.03, salary: 6000 };", 'hire(' + NAMES[i].toLowerCase() + ');']; } },
+  { id: 'hide', max: 1, name: 'Retirer la courbe réelle',
+    hint: 'Elle gâchait la présentation. Les journalistes aussi la trouvaient gênante.',
+    cost: () => 0,
+    lines: () => ['hideReal();'] },
+  { id: 'raise', max: 1, name: 'Lever 40 M€',
+    hint: 'Valorisation : 2 400 € par utilisateur affiché. Seule la première tranche est versée.',
+    cost: () => 0,
+    needs: () => S.users >= 50000 ? '' : 'Les investisseurs veulent 50 000 utilisateurs affichés',
+    lines: () => ["const seriesA = { amount: '40 M€', received: 400000, multiple: 2400 };", 'raise(seriesA);'] },
+  { id: 'micro', max: 1, name: 'Passer aux microservices',
+    hint: 'Ça ne change rien pour les utilisateurs. Ça change beaucoup pour le code et pour le loyer.',
+    cost: () => 6000,
+    lines: () => ['const services = [', ...SERVICES.flatMap(n => [
+      '  {', "    name: '" + n + "',", '    replicas: 3,', "    cpu: '2 vCPU',", "    owner: 'équipe " + n + "',", "    docs: 'wiki/" + n + " (introuvable)',", '  },']),
+      '];', 'split(services, 6000);'] },
+];
+
+// === CROISSANCE ===
+// (rien pour l'instant : actionne un levier)
+// === FIN ===
+
+// Les leviers déjà présents dans le code au chargement (page téléchargée) sont repris tels quels.
+function parseGroups(body) {
+  const groups = [];
+  for (const line of body.split('\n')) {
+    const m = MARK.exec(line);
+    if (m) groups.push({ id: m[1], lines: [] });
+    else if (groups.length && line.trim()) groups[groups.length - 1].lines.push(line);
+  }
+  return groups;
+}
+let grown = parseGroups((BLOCK.exec(PRISTINE) || [0, ''])[1]);
+
+function sourceFor(groups) {
+  const body = groups.length
+    ? groups.map(g => '// levier : ' + g.id + '\n' + g.lines.join('\n') + '\n').join('')
+    : "// (rien pour l'instant : actionne un levier)\n";
+  return PRISTINE.replace(BLOCK, () => '// === CROISSANCE ===\n' + body + '// === FIN ===');
+}
+const sourceNow = () => sourceFor(grown);
+
+// Des événements au hasard : la startup ne contrôle pas tout.
+const EVENTS = [
+  { when: () => true, text: 'Hacker News : ton site passe en première page (buzz).', run: () => { S.hype = Math.min(100, S.hype + 40); } },
+  { when: () => S.showReal, text: 'Un journaliste demande tes chiffres réels. La ligne pointillée répond à ta place. Le buzz retombe.', run: () => { S.hype = 0; } },
+  { when: () => !S.showReal, text: 'Un journaliste demande tes chiffres. Réponse : « pas de commentaire ». Il y voit de la confiance.', run: () => { S.hype = Math.min(100, S.hype + 15); } },
+  { when: () => used('buy') > 0, text: 'Un utilisateur signale que 9 000 comptes ont le même mot de passe. −15 % d\'utilisateurs.', run: () => { S.users *= 0.85; } },
+  { when: () => true, text: 'Panne en production pendant trois jours. −3 000 € de dédommagements.', run: () => { S.cash -= 3000; } },
+  { when: () => used('hire') > 0, text: 'Séminaire de l\'équipe growth à Ibiza. −5 000 €.', run: () => { S.cash -= 5000; } },
+  { when: () => S.valuation > 0, text: 'Un investisseur demande à voir le produit. Tu lui montres la courbe. Valorisation +20 %.', run: () => { S.valuation *= 1.2; } },
+  { when: () => true, text: 'Un concurrent copie ta page. Croissance −0,5 point.', run: () => { S.g = Math.max(0.005, S.g - 0.005); } },
+];
+function maybeEvent() {
+  if (S.month < 4 || Math.random() > 0.13) return;
+  const ok = EVENTS.filter(e => e.when());
+  const e = ok[Math.floor(Math.random() * ok.length)];
+  e.run();
+  S.log.unshift('M' + S.month + ' · ' + e.text);
+}
+
+const $ = id => document.getElementById(id);
+const nf = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const cf = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 });
+const kf = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmt = x => (!isFinite(x) || x >= 1e21) ? '∞' : x < 1e9 ? nf.format(x) : cf.format(x);
+const bytesOf = s => new Blob([s]).size;
+const TOKENS = /(\/\/.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|(\b\d[\d_.]*\b)|\b(const|let|function|return|new|true|false)\b/g;
+function paint(el, text) {
+  let last = 0, m;
+  TOKENS.lastIndex = 0;
+  while ((m = TOKENS.exec(text))) {
+    if (m.index > last) el.append(text.slice(last, m.index));
+    const sp = document.createElement('span');
+    sp.className = m[1] ? 'cm' : m[2] ? 's' : m[3] ? 'n' : 'k';
+    sp.textContent = m[0];
+    el.appendChild(sp);
+    last = TOKENS.lastIndex;
+  }
+  if (last < text.length) el.append(text.slice(last));
+}
+const BASE_BYTES = bytesOf(sourceFor([]));
+
+function drawChart() {
+  const W = 600, H = 240, padX = 14, padY = 22;
+  const h = S.hist, max = Math.max(...h), min = Math.min(...h);
+  let lo = 0, hi = max * 1.05 || 1;
+  if (S.axisCut) {
+    const span = max - min;
+    lo = span > 0 ? min - span * 0.05 : min * 0.9;
+    hi = span > 0 ? max + span * 0.05 : max * 1.02;
+  }
+  const y = v => H - padY - ((v - lo) / (hi - lo)) * (H - 2 * padY);
+  const x = i => padX + (i / (WINDOW - 1)) * (W - 2 * padX);
+  const pts = h.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  let svg = '<line x1="' + padX + '" y1="' + (H - padY) + '" x2="' + (W - padX) + '" y2="' + (H - padY) + '" stroke="#d9d6ee"/>';
+  if (S.showReal && S.real >= lo && S.real <= hi) {
+    svg += '<line x1="' + padX + '" y1="' + y(S.real) + '" x2="' + (W - padX) + '" y2="' + y(S.real) + '" stroke="#9a98ad" stroke-dasharray="4 4"/>' +
+      '<text x="' + (W - padX) + '" y="' + (y(S.real) - 5) + '" text-anchor="end">utilisateurs réels</text>';
+  }
+  svg += '<polyline points="' + pts + '" fill="none" stroke="#12a150" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
+  if (S.axisCut) svg += '<text x="' + padX + '" y="14">axe : optimisé</text>';
+  else svg += '<text x="' + padX + '" y="14">' + fmt(hi) + '</text><text x="' + padX + '" y="' + (H - 6) + '">0</text>';
+  svg += '<text x="' + (W - padX) + '" y="' + (H - 6) + '" text-anchor="end">24 derniers mois</text>';
+  $('chart').innerHTML = svg;
+}
+
+let leverEls = [];
+function refreshLevers() {
+  for (const { lv, btn, tag, price } of leverEls) {
+    const n = used(lv.id), done = n >= lv.max;
+    const need = !done && lv.needs ? lv.needs() : '';
+    const cost = done ? 0 : lv.cost();
+    const poor = !done && !need && S.cash < cost;
+    btn.disabled = done || !!need || poor || S.over;
+    btn.classList.toggle('done', done);
+    tag.textContent = lv.max > 1 ? '  ' + n + '/' + lv.max : '';
+    price.textContent = done ? '' : need ? 'Verrouillé : ' + need.toLowerCase() : poor ? 'Trésorerie insuffisante : ' + fmt(cost) + ' €' : cost ? fmt(cost) + ' €' : 'gratuit';
+  }
+}
+
+function renderLive() {
+  $('brand').textContent = S.brand;
+  $('tag').textContent = S.tag;
+  $('tag').hidden = !S.tag;
+  $('k-label').textContent = S.label;
+  $('k-users').textContent = fmt(S.users);
+  $('k-real').textContent = S.showReal ? 'Réels : ' + fmt(S.real) : '';
+  $('k-val').textContent = S.valuation ? fmt(S.users * S.valuation) + ' €' : '—';
+  $('k-notes').textContent = S.notes.join(' · ');
+  const net = S.burn - S.real * 9;
+  $('k-cash').textContent = fmt(Math.max(0, S.cash)) + ' €';
+  $('k-runway').textContent = S.over ? 'Faillite' : 'Plus d\'argent dans ' + Math.max(0, Math.floor(S.cash / net)) + ' mois (dépenses : ' + fmt(S.burn) + ' €/mois)';
+  $('buzz').textContent = 'Buzz : ' + Math.round(S.hype) + ' %';
+  $('month').textContent = 'Mois ' + S.month;
+  $('chart').setAttribute('aria-label', 'Courbe de croissance : ' + fmt(S.users) + ' ' + S.label.toLowerCase());
+  $('log').textContent = '';
+  for (const t of S.log.slice(0, 4)) { const li = document.createElement('li'); li.textContent = t; $('log').appendChild(li); }
+  drawChart();
+  refreshLevers();
+}
+
+let expanded = false, shownBlockLines = 0, lastTotal = 0;
+function renderCode() {
+  const src = sourceNow();
+  const lines = src.split('\n');
+  const a = lines.indexOf('// === CROISSANCE ===');
+  const b = lines.indexOf('// === FIN ===');
+  const box = $('code'), keep = box.scrollTop;
+  box.textContent = '';
+  let newIdx = 0;
+  const add = (i, isNew) => {
+    const d = document.createElement('div');
+    d.dataset.n = i + 1;
+    if (i > a && i < b) paint(d, lines[i]); else d.textContent = lines[i];
+    if (/^\s*\/\//.test(lines[i])) d.className = 'cm';
+    if (isNew) { d.classList.add('new'); d.style.setProperty('--i', newIdx++); }
+    box.appendChild(d);
+  };
+  const fold = (from, to, label) => {
+    if (to <= from) return;
+    const f = document.createElement('button');
+    f.type = 'button'; f.className = 'fold';
+    f.textContent = '▸ ' + (to - from) + ' lignes ' + label + ' (afficher)';
+    f.onclick = () => { expanded = true; renderCode(); };
+    box.appendChild(f);
+  };
+  const blockLen = b - a + 1;
+  if (expanded) for (let i = 0; i < lines.length; i++) add(i, i >= a + 1 + shownBlockLines && i < b);
+  else { fold(0, a, 'de la page, avant les leviers'); for (let i = a; i <= b; i++) add(i, i >= a + 1 + shownBlockLines && i < b); fold(b + 1, lines.length, 'jusqu\'à la fin de la page'); }
+  shownBlockLines = blockLen - 2;
+  const total = bytesOf(src), pct = Math.round((total / BASE_BYTES - 1) * 100);
+  $('bytes').textContent = kf.format(total / 1024) + ' ko';
+  $('size').textContent = (pct > 0 ? '+' : '') + pct + ' % depuis l\'ouverture · ' + nf.format(lines.length) + ' lignes';
+  $('meter').style.width = Math.max(0, Math.min(1, (total - BASE_BYTES) / (BASE_BYTES * 0.25))) * 100 + '%';
+  if (newIdx && lastTotal && total > lastTotal) {
+    const d = $('delta');
+    d.textContent = '+' + newIdx + ' lignes · +' + nf.format(total - lastTotal) + ' octets';
+    d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop');
+  }
+  lastTotal = total;
+  box.scrollTop = expanded ? keep : 0;
+  const lastNew = box.querySelector('.new:last-of-type');
+  if (lastNew) lastNew.scrollIntoView({ block: 'nearest' });
+}
+
+function renderVerdict() {
+  const total = bytesOf(sourceNow()), pct = Math.round((total / BASE_BYTES - 1) * 100);
+  let t = '';
+  if (S.over) t = 'Faillite au mois ' + S.month + '. Utilisateurs affichés : ' + fmt(S.users) + '. Utilisateurs réels : ' + S.real + '. « Tout annuler » pour recommencer.';
+  else if (S.valuation && S.users >= 1e6) t = 'Licorne : ' + fmt(S.users * S.valuation) + ' € de valorisation. Utilisateurs réels : ' + S.real + '. Le fichier a grossi de ' + pct + ' %.';
+  else if (grown.length >= 5) t = 'Croissance affichée : ×' + fmt(S.users / 3) + '. Utilisateurs réels : ' + S.real + '. Le fichier, lui, a grossi de ' + pct + ' %.';
+  $('verdict').textContent = t;
+}
+
+function renderLevers() {
+  const ul = $('levers');
+  ul.textContent = '';
+  leverEls = [];
+  for (const lv of LEVERS) {
+    const li = document.createElement('li'), btn = document.createElement('button');
+    const b = document.createElement('b'), nm = document.createElement('span'), tag = document.createElement('i');
+    const hint = document.createElement('span'), price = document.createElement('span');
+    btn.type = 'button';
+    nm.textContent = lv.name; hint.textContent = lv.hint; price.className = 'price';
+    b.append(nm, tag); btn.append(b, hint, price);
+    btn.onclick = () => activate(lv);
+    li.appendChild(btn); ul.appendChild(li);
+    leverEls.push({ lv, btn, tag, price });
+  }
+}
+
+function activate(lv) {
+  const lines = lv.lines();
+  new Function(lines.join('\n'))();
+  grown.push({ id: lv.id, lines });
+  renderLive(); renderCode(); renderVerdict();
+}
+
+function tick() {
+  if (S.over) return;
+  S.month++;
+  const rate = S.g * (1 + S.hype / 50);
+  S.users = Math.min(1e300, S.users * (1 + rate) * (1 + (Math.random() - .5) * 0.02));
+  S.hype *= 0.88;
+  S.cash += S.real * 9 - S.burn;
+  S.hist.push(S.users);
+  S.hist.shift();
+  maybeEvent();
+  if (S.cash < 0) S.over = true;
+  renderLive(); renderVerdict();
+}
+
+function flash(btn, text) {
+  const old = btn.textContent;
+  btn.textContent = text;
+  setTimeout(() => { btn.textContent = old; }, 1400);
+}
+
+let speed = 1, paused = false;
+$('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Reprendre' : 'Pause'; $('pause').setAttribute('aria-pressed', paused); };
+$('speed').onclick = () => { speed = speed === 1 ? 3 : 1; $('speed').textContent = 'Vitesse ×' + speed; };
+$('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(sourceNow()); flash($('copy'), 'Copié'); }
+  catch { flash($('copy'), 'Copie impossible'); }
+};
+$('dl').onclick = () => {
+  const url = URL.createObjectURL(new Blob([sourceNow()], { type: 'text/html' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'grow-' + grown.length + '-leviers.html';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+$('reset').onclick = () => {
+  S = fresh(); grown = []; shownBlockLines = 0; expanded = false;
+  renderLive(); renderCode(); renderVerdict();
+};
+
+renderLevers(); renderLive(); renderCode(); renderVerdict();
+(function loop() {
+  if (!document.hidden && !paused) tick();
+  setTimeout(loop, 1000 / speed);
+})();
+</script>
+</body>
+</html>

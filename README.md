@@ -24,7 +24,7 @@ Total liberté sur la forme : jeu, animation, art génératif, outil, expérienc
 | 10 | Fold | |
 | 11 | Ripple | |
 | 12 | Lost | [Day-12-lost](Day-12-lost) |
-| 13 | Tangle | |
+| 13 | Tangle | [Day-13-tangle](Day-13-tangle) |
 | 14 | Bounce | |
 | 15 | Shadow | |
 | 16 | Tide | |

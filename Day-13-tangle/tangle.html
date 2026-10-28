@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 13 - Tangle</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f9d55'/%3E%3Ctext x='16' y='23' font-size='20' font-family='monospace' font-weight='700' text-anchor='middle' fill='white'%3ED%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="tangle.css">
+</head>
+<body>
+<main>
+  <h1>Day 13 / Tangle</h1>
+  <p class="sub">Choisis une photo : des <b>branches</b> colorées, façon graphe Git, poussent et s'<b>enchevêtrent</b> pour redessiner ses contours, avec ses couleurs en version simplifiée.</p>
+
+  <div class="bar">
+    <label class="btn" for="file">Choisir une photo</label>
+    <input type="file" id="file" accept="image/*" class="sr">
+    <button type="button" class="ghost" id="sample">Exemple</button>
+    <button type="button" class="ghost" id="replay" disabled>Rejouer</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="Les contours de la photo, dessinés par des branches Git colorées"></canvas>
+    <canvas id="heads" aria-hidden="true"></canvas>
+    <div class="drop" id="drop" aria-hidden="true">Glisse une photo ici</div>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <div class="side">
+    <div class="orig">
+      <span class="label">La photo</span>
+      <canvas id="thumb" width="1" height="1" aria-label="Aperçu de la photo d'origine"></canvas>
+    </div>
+    <div class="orig">
+      <span class="label">Les couleurs gardées</span>
+      <div class="pal" id="pal" aria-hidden="true"></div>
+    </div>
+    <div class="ctrl">
+      <label>Couleurs <span id="colorsv"></span>
+        <input type="range" id="colors" min="3" max="10" step="1" value="6">
+      </label>
+      <label>Détail <span id="detailv"></span>
+        <input type="range" id="detail" min="0" max="100" step="5" value="40">
+      </label>
+      <label>Vitesse <span id="speedv"></span>
+        <input type="range" id="speed" min="0.5" max="4" step="0.5" value="1">
+      </label>
+    </div>
+  </div>
+</main>
+<script src="tangle.js"></script>
+</body>
+</html>
